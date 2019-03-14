@@ -21,41 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.nuls.contract.model.bo;
+package io.nuls.contract.model.dto;
 
-import io.nuls.base.data.NulsDigestData;
+
+import io.nuls.contract.model.bo.ContractTokenInfo;
+import io.nuls.contract.util.ContractUtil;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author: PierreLuo
+ * @date: 2018/8/19
  */
 @Getter
 @Setter
-public class ContractMergedTransfer {
+public class ContractTokenInfoDto {
 
-    private byte[] from;
-    private BigInteger value;
-    private List<Output> outputs;
+    private String contractAddress;
+    private String name;
+    private String symbol;
+    private String amount;
+    private long decimals;
+    private long blockHeight;
+    private int status;
 
-
-    /**
-     * 智能合约交易hash
-     */
-    private NulsDigestData orginHash;
-
-    /**
-     * 合约转账(从合约转出)交易hash
-     */
-    private NulsDigestData hash;
-
-    public ContractMergedTransfer() {
-        outputs = new ArrayList<>();
+    public ContractTokenInfoDto() {
     }
 
+    public ContractTokenInfoDto(ContractTokenInfo info) {
+        this.contractAddress = info.getContractAddress();
+        this.name = info.getName();
+        this.symbol = info.getSymbol();
+        this.amount = ContractUtil.bigInteger2String(info.getAmount());
+        this.decimals = info.getDecimals();
+        this.blockHeight = info.getBlockHeight();
+        this.status = info.getStatus();
+    }
 
 }

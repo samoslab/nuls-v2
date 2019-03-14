@@ -1,4 +1,4 @@
-/*
+/**
  * MIT License
  *
  * Copyright (c) 2017-2019 nuls.io
@@ -20,29 +20,29 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
  */
+package io.nuls.contract.model.dto;
 
-package io.nuls.contract.service;
 
-
-import io.nuls.contract.model.po.TransactionInfoPo;
-import io.nuls.tools.basic.Result;
-
-import java.util.List;
+import io.nuls.base.basic.AddressTool;
+import io.nuls.base.data.NulsDigestData;
+import io.nuls.contract.model.txdata.ContractTransferData;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * @desription:
- * @author: PierreLuo
- * @date: 2018/6/5
+ * @Author: PierreLuo
  */
-public interface ContractTransactionInfoService {
+@Getter
+@Setter
+public class ContractTransferDataDto{
+    private String orginTxHash;
+    private String contractAddress;
 
-    Result<List<TransactionInfoPo>> getTxInfoList(int chainId, byte[] address);
+    public ContractTransferDataDto(ContractTransferData transferData) {
+        NulsDigestData thatOrginTxHash = transferData.getOrginTxHash();
+        this.orginTxHash = thatOrginTxHash == null ? null : thatOrginTxHash.getDigestHex();
+        this.contractAddress = AddressTool.getStringAddressByBytes(transferData.getContractAddress());
+    }
 
-    Result<Integer> saveTransactionInfo(int chainId, TransactionInfoPo infoPo, List<byte[]> addresses);
-
-    boolean isDbExistTransactionInfo(int chainId, TransactionInfoPo infoPo, byte[] address);
-
-    Result deleteTransactionInfo(int chainId, TransactionInfoPo infoPo, List<byte[]> addresses);
 }
