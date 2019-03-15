@@ -23,26 +23,36 @@
  *
  */
 
-package io.nuls.contract.service;
+package io.nuls.contract.model.dto;
 
 
-import io.nuls.contract.model.po.TransactionInfoPo;
-import io.nuls.tools.basic.Result;
+import io.nuls.base.basic.AddressTool;
+import io.nuls.base.data.CoinTo;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.List;
+import static io.nuls.contract.util.ContractUtil.bigInteger2String;
 
 /**
- * @desription:
+ *
  * @author: PierreLuo
- * @date: 2018/6/5
+ * @date: 2019-03-14
  */
-public interface ContractTransactionInfoService {
+@Getter
+@Setter
+public class OutputDto {
 
-    Result<List<TransactionInfoPo>> getTxInfoList(int chainId, byte[] address);
+    private String address;
+    private int assetsChainId;
+    private int assetsId;
+    private String amount;
+    private long lockTime;
 
-    Result<Integer> saveTransactionInfo(int chainId, TransactionInfoPo infoPo, List<byte[]> addresses);
-
-    boolean isDbExistTransactionInfo(int chainId, TransactionInfoPo infoPo, byte[] address);
-
-    Result deleteTransactionInfo(int chainId, TransactionInfoPo infoPo, List<byte[]> addresses);
+    public OutputDto(CoinTo to) {
+        this.address = AddressTool.getStringAddressByBytes(to.getAddress());
+        this.assetsChainId = to.getAssetsChainId();
+        this.assetsId = to.getAssetsId();
+        this.amount = bigInteger2String(to.getAmount());
+        this.lockTime = to.getLockTime();
+    }
 }

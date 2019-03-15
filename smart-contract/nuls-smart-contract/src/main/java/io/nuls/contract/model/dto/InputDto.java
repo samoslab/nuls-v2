@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017-2018 nuls.io
+ * Copyright (c) 2017-2019 nuls.io
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +22,40 @@
  * SOFTWARE.
  *
  */
-package io.nuls.ledger.utils;
 
-import io.nuls.rpc.model.message.Response;
+package io.nuls.contract.model.dto;
 
-import java.util.Map;
+
+import io.nuls.base.basic.AddressTool;
+import io.nuls.base.data.CoinFrom;
+import lombok.Getter;
+import lombok.Setter;
+import org.spongycastle.util.encoders.Hex;
+
+import static io.nuls.contract.util.ContractUtil.bigInteger2String;
 
 /**
- * @author lan
- * @description
- * @date 2019/01/16
- **/
-public class ResponseUtils {
-    public Map<String,Object> getResultMap(Response response,String cmd){
-        if(response.isSuccess()){
-            Object o=((Map)response.getResponseData()).get(cmd);
-            if(null != o){
-                return (Map)o;
-            }
-        }
-        return null;
+ * @author: PierreLuo
+ * @date: 2019-03-14
+ */
+@Getter
+@Setter
+public class InputDto {
+
+    private String address;
+    private int assetsChainId;
+    private int assetsId;
+    private String amount;
+    private String nonce;
+    private byte locked;
+
+
+    public InputDto(CoinFrom from) {
+        this.address = AddressTool.getStringAddressByBytes(from.getAddress());
+        this.assetsChainId = from.getAssetsChainId();
+        this.assetsId = from.getAssetsId();
+        this.amount = bigInteger2String(from.getAmount());
+        this.nonce = Hex.toHexString(from.getNonce());
+        this.locked = from.getLocked();
     }
 }

@@ -2,9 +2,11 @@ package io.nuls.ledger.utils;
 
 import io.nuls.base.basic.AddressTool;
 import io.nuls.base.data.Transaction;
+import io.nuls.ledger.config.LedgerConfig;
 import io.nuls.ledger.constant.LedgerConstant;
 import io.nuls.ledger.model.po.UnconfirmedAmount;
 import io.nuls.ledger.model.po.UnconfirmedNonce;
+import io.nuls.tools.core.ioc.SpringLiteContext;
 import io.nuls.tools.crypto.HexUtil;
 
 import java.io.UnsupportedEncodingException;
@@ -12,7 +14,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * Created by lanjinsheng on 2019/01/02
  */
-public class LedgerUtils {
+public class LedgerUtil {
     /**
      * rockdb key
      *
@@ -32,6 +34,7 @@ public class LedgerUtils {
      * @return byte[]
      */
     public static byte[] getKey(String address, int assetChainId, int assetId) {
+        LedgerConfig ledgerConfig = SpringLiteContext.getBean(LedgerConfig.class);
         String key = address + "-" + assetChainId + "-" + assetId;
         try {
             return (key.getBytes(LedgerConstant.DEFAULT_ENCODING));
