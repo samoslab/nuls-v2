@@ -81,11 +81,12 @@ public class ForwardSmallBlockHandler extends BaseCmd {
         Long height = context.getCachedHashHeightMap().get(blockHash);
         if (height != null) {
             NetworkUtil.setHashAndHeight(chainId, blockHash, height, nodeId);
-        } else {
-            context.getCommonLog().debug("can't set node height, nodeId-" + nodeId + "hash-" + blockHash);
         }
+//        else {
+//            context.getCommonLog().debug("can't set node height, nodeId-" + nodeId + "hash-" + blockHash);
+//        }
         BlockForwardEnum status = SmallBlockCacher.getStatus(chainId, blockHash);
-        messageLog.debug("recieve HashMessage from node-" + nodeId + ", chainId:" + chainId + ", hash:" + blockHash);
+//        messageLog.debug("recieve HashMessage from node-" + nodeId + ", chainId:" + chainId + ", hash:" + blockHash);
         //1.已收到完整区块,丢弃
         if (BlockForwardEnum.COMPLETE.equals(status)) {
             SmallBlock smallBlock = SmallBlockCacher.getSmallBlock(chainId, blockHash);

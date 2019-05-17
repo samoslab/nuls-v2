@@ -407,7 +407,7 @@ public class BlockUtil {
         int singleDownloadTimeout = context.getParameters().getsingleDownloadTimeout();
         NulsLogger commonLog = context.getCommonLog();
         Future<Block> future = BlockCacher.addSingleBlockRequest(chainId, hash);
-        commonLog.debug("get block-" + hash + " from " + nodeId + "begin");
+//        commonLog.debug("get block-" + hash + " from " + nodeId + "begin");
         boolean result = NetworkUtil.sendToNode(chainId, message, nodeId, GET_BLOCK_MESSAGE);
         if (!result) {
             BlockCacher.removeBlockByHashFuture(chainId, hash);

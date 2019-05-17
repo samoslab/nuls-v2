@@ -88,7 +88,7 @@ public class BlockWorker implements Callable<BlockDownLoadResult> {
             int interval = context.getParameters().getWaitInterval();
             int count = 0;
             while (real < size && count < maxLoop) {
-                commonLog.debug("#start-" + message.getStartHeight() + ",end-" + message.getEndHeight() + "#real-" + real + ",expect-" + size + ",count-" + count + ",node-" +node.getId());
+//                commonLog.debug("#start-" + message.getStartHeight() + ",end-" + message.getEndHeight() + "#real-" + real + ",expect-" + size + ",count-" + count + ",node-" +node.getId());
                 Thread.sleep(interval * (size - real));
                 blockList = BlockCacher.getBlockList(chainId, messageHash);
                 real = blockList.size();

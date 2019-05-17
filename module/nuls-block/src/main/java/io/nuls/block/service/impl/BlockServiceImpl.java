@@ -521,12 +521,7 @@ public class BlockServiceImpl implements BlockService {
         ChainContext context = ContextManager.getContext(chainId);
         NulsLogger commonLog = context.getCommonLog();
         BlockHeader header = block.getHeader();
-        BlockExtendsData extendsData = new BlockExtendsData(header.getExtend());
-        //0.版本验证：通过获取block中extends字段的版本号
-        if (header.getHeight() > 0 && !ProtocolUtil.checkBlockVersion(chainId, header)) {
-            commonLog.warn("checkBlockVersion failed! height-" + header.getHeight());
-            return false;
-        }
+//        BlockExtendsData extendsData = new BlockExtendsData(header.getExtend());
 
         //1.验证一些基本信息如区块大小限制、字段非空验证
         boolean basicVerify = BlockUtil.basicVerify(chainId, block);
@@ -541,6 +536,13 @@ public class BlockServiceImpl implements BlockService {
             commonLog.error("forkVerify-" + forkVerify);
             return false;
         }
+
+        //0.版本验证：通过获取block中extends字段的版本号
+        if (header.getHeight() > 0 && !ProtocolUtil.checkBlockVersion(chainId, header)) {
+            commonLog.warn("checkBlockVersion failed! height-" + header.getHeight());
+            return false;
+        }
+
         //共识验证
         boolean consensusVerify = ConsensusUtil.verify(chainId, block, download);
         if (!consensusVerify) {

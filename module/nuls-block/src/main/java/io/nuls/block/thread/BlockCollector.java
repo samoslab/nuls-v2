@@ -81,7 +81,7 @@ public class BlockCollector implements Runnable {
                 long endHeight = startHeight + size - 1;
                 PriorityBlockingQueue<Node> nodes = params.getNodes();
                 if (result.isSuccess()) {
-                    commonLog.info("get " + size + " blocks:" + startHeight + "->" + endHeight + " ,from:" + node.getId() + ", success");
+//                    commonLog.info("get " + size + " blocks:" + startHeight + "->" + endHeight + " ,from:" + node.getId() + ", success");
                     node.adjustCredit(true, result.getDuration());
                     nodes.offer(node);
                     List<Block> blockList = BlockCacher.getBlockList(chainId, result.getMessageHash());

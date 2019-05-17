@@ -110,7 +110,7 @@ public class SmallBlockHandler extends BaseCmd {
         }
 
         BlockForwardEnum status = SmallBlockCacher.getStatus(chainId, blockHash);
-        messageLog.debug("recieve smallBlockMessage from node-" + nodeId + ", chainId:" + chainId + ", height:" + header.getHeight() + ", hash:" + header.getHash());
+//        messageLog.debug("recieve smallBlockMessage from node-" + nodeId + ", chainId:" + chainId + ", height:" + header.getHeight() + ", hash:" + header.getHash());
         context.getCachedHashHeightMap().put(blockHash, header.getHeight());
         NetworkUtil.setHashAndHeight(chainId, blockHash, header.getHeight(), nodeId);
         if (context.getStatus().equals(StatusEnum.SYNCHRONIZING)) {

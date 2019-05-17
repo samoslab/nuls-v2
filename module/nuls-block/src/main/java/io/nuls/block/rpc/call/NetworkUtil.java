@@ -157,7 +157,7 @@ public class NetworkUtil {
             params.put("messageBody", RPCUtil.encode(message.serialize()));
             params.put("command", command);
             boolean success = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_sendPeersMsg", params).isSuccess();
-            messageLog.debug("send " + message.getClass().getName() + " to node-" + nodeId + ", chainId:" + chainId + ", success:" + success);
+//            messageLog.debug("send " + message.getClass().getName() + " to node-" + nodeId + ", chainId:" + chainId + ", success:" + success);
             return success;
         } catch (Exception e) {
             e.printStackTrace();
