@@ -176,7 +176,7 @@ public abstract class RpcModule implements InitializingBean {
                 return true;
             }
             try {
-                Response cmdResp = ResponseMessageProcessor.requestAndResponse(module.getName(), "listenerDependenciesReady", MapUtils.beanToLinkedMap(this.moduleInfo()),1L);
+                Response cmdResp = ResponseMessageProcessor.requestAndResponse(module.getName(), "listenerDependenciesReady", MapUtils.beanToLinkedMap(this.moduleInfo()));
                 if (cmdResp.isSuccess()) {
                     followerList.put(module, Boolean.TRUE);
                     Log.info("notify follower {} is Ready success", module);
