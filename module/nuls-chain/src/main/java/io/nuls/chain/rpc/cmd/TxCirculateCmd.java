@@ -42,7 +42,6 @@ import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.model.ObjectUtils;
-import io.nuls.core.log.Log;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -228,7 +227,7 @@ public class TxCirculateCmd extends BaseChainCmd {
             //进行数据回滚
             cacheDataService.rollBlockTxs(chainId, commitHeight);
         } catch (Exception e) {
-            Log.error(e);
+            LoggerUtil.logger().error(e);
             return failed(e.getMessage());
         }
         Map<String, Boolean> resultMap = new HashMap<>();
