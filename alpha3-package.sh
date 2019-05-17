@@ -1,6 +1,6 @@
 #!/bin/bash
 cd `dirname $0`
-if [ -n "$1"];
+if [ -n "$1" ];
 then
 ./package -Nb alpha3 -J $1
 else
