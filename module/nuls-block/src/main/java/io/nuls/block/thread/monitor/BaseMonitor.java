@@ -47,9 +47,10 @@ public abstract class BaseMonitor implements Runnable {
                 //判断该链的运行状态,只有正常运行时才运行定时监控线程
                 if (runningStatusEnumList.contains(status)) {
                     process(chainId, context, commonLog);
-                } else {
-                    commonLog.debug("skip process, status is " + status + ", chainId-" + chainId);
                 }
+//                else {
+//                    commonLog.debug("skip process, status is " + status + ", chainId-" + chainId);
+//                }
             } catch (Exception e) {
                 e.printStackTrace();
                 context.setStatus(status);

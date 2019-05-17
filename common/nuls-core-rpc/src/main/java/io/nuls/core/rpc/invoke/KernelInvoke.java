@@ -51,7 +51,7 @@ public class KernelInvoke extends BaseInvoke {
         StringBuilder logInfo = new StringBuilder("\n有模块信息改变，重新同步：\n");
         for (Object object : dependMap.entrySet()) {
             Map.Entry<String, Map> entry = (Map.Entry<String, Map>) object;
-            logInfo.append("注入：[key=").append(entry.getKey()).append(",value=").append(entry.getValue()).append("]\n");
+//            logInfo.append("注入：[key=").append(entry.getKey()).append(",value=").append(entry.getValue()).append("]\n");
             ConnectManager.ROLE_MAP.put(entry.getKey(), entry.getValue());
         }
         ConnectManager.updateStatus();

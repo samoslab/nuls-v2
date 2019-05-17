@@ -54,7 +54,7 @@ public class CompleteHandler extends BaseCmd {
     @MessageHandler(message = CompleteMessage.class)
     public Response process(Map map) {
         int chainId = Integer.parseInt(map.get("chainId").toString());
-        String nodeId = map.get("nodeId").toString();
+//        String nodeId = map.get("nodeId").toString();
         CompleteMessage message = new CompleteMessage();
         NulsLogger messageLog = ContextManager.getContext(chainId).getMessageLog();
         try {
@@ -65,7 +65,7 @@ public class CompleteHandler extends BaseCmd {
             messageLog.error(e);
             return failed(BlockErrorCode.PARAMETER_ERROR);
         }
-        messageLog.debug("recieve CompleteMessage from node-" + nodeId + ", chainId:" + chainId);
+//        messageLog.debug("recieve CompleteMessage from node-" + nodeId + ", chainId:" + chainId);
         BlockCacher.batchComplete(chainId, message);
         return success();
     }
