@@ -1,9 +1,9 @@
 [global]
 encoding=UTF-8
 language=en
-logPath=./Logs
-logLevel=INFO
-dataPath=./data
+logPath=../../../../Logs
+logLevel=DEBUG
+dataPath=../../../../data
 serviceManager=ws://127.0.0.1:7771
 debug=0
 #默认链ID
@@ -92,6 +92,8 @@ cleanParam=2
 seedNodes=tNULSeBaMkrt4z9FYEkkR9D6choPVvQr94oYZp,tNULSeBaMoGr2RkLZPfJeS5dFzZeNj1oXmaYNe,tNULSeBaMnG8hGcyeygVeyaL5cXV38bQm1rw9M,tNULSeBaMtFXBLB35WSAnoN9ezGLLCbh7sPNNN
 password=nuls123456
 packingInterval=10000
+dataPath=../../../../../data
+logPath=../../../../../Logs
 
 [smart_contract]
 #合约视图方法调用最大消耗的Gas
@@ -111,3 +113,5 @@ maxNodeAmount=10
 sendHeight=5
 byzantineRatio=50
 crossSeedIps=192.168.1.131:18002
+dataPath=../../../../../data
+logPath=../../../../../Logs
