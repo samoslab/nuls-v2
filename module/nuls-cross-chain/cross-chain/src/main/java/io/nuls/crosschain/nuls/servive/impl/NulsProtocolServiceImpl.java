@@ -16,10 +16,7 @@ import io.nuls.crosschain.nuls.constant.NulsCrossChainConfig;
 import io.nuls.crosschain.nuls.constant.NulsCrossChainConstant;
 import io.nuls.crosschain.nuls.model.bo.Chain;
 import io.nuls.crosschain.nuls.model.bo.NodeType;
-import io.nuls.crosschain.nuls.rpc.call.AccountCall;
-import io.nuls.crosschain.nuls.rpc.call.ConsensusCall;
-import io.nuls.crosschain.nuls.rpc.call.NetWorkCall;
-import io.nuls.crosschain.nuls.rpc.call.TransactionCall;
+import io.nuls.crosschain.nuls.rpc.call.*;
 import io.nuls.crosschain.nuls.srorage.*;
 import io.nuls.crosschain.nuls.utils.CommonUtil;
 import io.nuls.crosschain.nuls.utils.TxUtil;
@@ -347,16 +344,20 @@ public class NulsProtocolServiceImpl implements ProtocolService {
             }else{
                 cacheHash = originalHash;
             }
+
             chain.getMessageLog().info("收到链内节点:{}发送过来的完整跨链交易信息,originalHash:{},Hash:{}",nodeId,originalHex,nativeHex);
-            if(NulsCrossChainConstant.CTX_STATE_PROCESSING.equals(chain.getCtxStageMap().put(cacheHash,NulsCrossChainConstant.CTX_STATE_PROCESSING))){
-                chain.getMessageLog().info("该跨链交易正在处理中,originalHash:{},Hash:{}\n\n",originalHex,nativeHex);
-                return;
-            }
+
             //判断本节点是否已经收到过该跨链交易，如果已收到过直接忽略
             if(convertToCtxService.get(originalHash, handleChainId) != null){
                 chain.getMessageLog().info("本节点已收到并处理过该跨链交易，originalHash:{},Hash:{}\n\n",originalHex,nativeHex);
                 return;
             }
+
+            if(NulsCrossChainConstant.CTX_STATE_PROCESSING.equals(chain.getCtxStageMap().put(cacheHash,NulsCrossChainConstant.CTX_STATE_PROCESSING))){
+                chain.getMessageLog().info("该跨链交易正在处理中,originalHash:{},Hash:{}\n\n",originalHex,nativeHex);
+                return;
+            }
+
             boolean handleResult = handleNewCtx(messageBody.getCtx(), originalHash, nativeHash, chain, chainId,nativeHex,originalHex,true);
 
             if(!handleResult && chain.getHashNodeIdMap().get(cacheHash)!= null && !chain.getHashNodeIdMap().get(cacheHash).isEmpty()){
@@ -516,7 +517,7 @@ public class NulsProtocolServiceImpl implements ProtocolService {
                 }else{
                     GetOtherCtxMessage responseMessage = new GetOtherCtxMessage();
                     responseMessage.setRequestHash(originalHash);
-                    NetWorkCall.sendToNode(chainId, responseMessage, nodeId, CommandConstant.GET_OTHER_CTX_MESSAGE);
+                    NetWorkCall.sendToNode(chainId, responseMessage, nodeType.getNodeId(), CommandConstant.GET_OTHER_CTX_MESSAGE);
                     chain.getMessageLog().info("跨链交易处理失败，向其他链节点：{}重新获取跨链交易，originalHash:{},Hash:{}",nodeType.getNodeId(),originalHex,nativeHex);
 
                 }
@@ -529,8 +530,6 @@ public class NulsProtocolServiceImpl implements ProtocolService {
         }
     }
 
-
-
     @Override
     public void getCirculat(int chainId, String nodeId, GetCirculationMessage messageBody) {
         int handleChainId = chainId;
@@ -538,18 +537,37 @@ public class NulsProtocolServiceImpl implements ProtocolService {
             handleChainId = config.getMainChainId();
         }
         Chain chain = chainManager.getChainMap().get(handleChainId);
+        chain.getMessageLog().info("主网节点{}本节点查询本链资产流通量,查询的资产ID为：{}\n\n",nodeId,messageBody.getAssetIds());
         //调用账本模块接口获取查询资产的流通量
         CirculationMessage message = new CirculationMessage();
-        //todo 调用账本模块查询资产明细
-        List<Circulation> circulationList = new ArrayList<>();
-        message.setCirculationList(circulationList);
-        //将结果返回给请求节点
-        NetWorkCall.sendToNode(chainId, message, nodeId, CommandConstant.CIRCULATION_MESSAGE);
+        try {
+            List<Circulation> circulationList = LedgerCall.getAssetsById(chain, messageBody.getAssetIds());
+            message.setCirculationList(circulationList);
+            //将结果返回给请求节点
+            NetWorkCall.sendToNode(chainId, message, nodeId, CommandConstant.CIRCULATION_MESSAGE);
+        }catch (NulsException e){
+            chain.getMessageLog().error(e);
+        }
     }
 
     @Override
     public void recvCirculat(int chainId, String nodeId, CirculationMessage messageBody) {
-        //todo 将接收到的资产明细发送给账本模块
+        int handleChainId = chainId;
+        if(config.isMainNet()){
+            handleChainId = config.getMainChainId();
+        }
+        Chain chain = chainManager.getChainMap().get(handleChainId);
+        chain.getMessageLog().info("接收到友链:{}节点:{}发送的资产该链最新资产流通量信\n\n",chainId,nodeId);
+        try {
+            ChainManagerCall.sendCirculation(chainId, messageBody);
+        }catch (NulsException e){
+            chain.getMessageLog().error(e);
+        }
+    }
+
+    @Override
+    public void recRegisteredChainInfo(int chainId, String nodeId, RegisteredChainMessage messageBody) {
+        chainManager.setRegisteredCrossChainList(messageBody.getChainInfoList());
     }
 
     /**

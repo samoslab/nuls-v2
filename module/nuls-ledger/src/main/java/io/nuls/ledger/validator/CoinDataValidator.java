@@ -177,7 +177,7 @@ public class CoinDataValidator {
      * 开始批量校验,整个区块校验，场景：接收到的外部的区块包
      */
     public boolean blockValidate(int chainId, long height, List<Transaction> txs) {
-        LoggerUtil.logger(chainId).debug("peer blocksValidate chainId={},height={},txsNumber={}", chainId, height, txs.size());
+//        LoggerUtil.logger(chainId).debug("peer blocksValidate chainId={},height={},txsNumber={}", chainId, height, txs.size());
         Map<String, String> batchValidateTxMap = new HashMap(1024);
         Map<String, List<TempAccountNonce>> accountValidateTxMap = new HashMap<>(1024);
         Map<String, AccountState> accountStateMap = new HashMap<>(1024);

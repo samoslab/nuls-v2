@@ -40,6 +40,24 @@ public class ChainServiceImpl implements ChainService {
     @Autowired
     private RpcService rpcService;
 
+    private static Map<String, Object> chainNetMagicNumberMap = new HashMap<>();
+
+    public void addChainMagicNumber(long magicNumber) {
+        chainNetMagicNumberMap.put(String.valueOf(magicNumber), 1);
+    }
+
+    public boolean hadExistMagicNumber(long magicNumber) {
+        return (null != chainNetMagicNumberMap.get(String.valueOf(magicNumber)));
+    }
+
+    @Override
+    public void initRegChainDatas() throws Exception {
+        List<BlockChain> list = getBlockList();
+        for (BlockChain blockChain : list) {
+            chainNetMagicNumberMap.put(String.valueOf(blockChain.getMagicNumber()), 1);
+        }
+    }
+
     /**
      * 把Nuls2.0主网默认注册到Nuls2.0上（便于进行链资产的统一处理）
      * Register the Nuls2.0 main network to Nuls2.0 by default (Nuls2.0 main network can be considered as the first friend chain of Nurs2.0 ecosystem)
@@ -55,6 +73,7 @@ public class ChainServiceImpl implements ChainService {
         }
         chain = new BlockChain();
         int assetId = Integer.parseInt(nulsChainConfig.getMainAssetId());
+        chain.setChainId(chainId);
         chain.setRegAssetId(assetId);
         chain.addCreateAssetId(CmRuntimeInfo.getAssetKey(chainId, assetId));
         chain.addCirculateAssetId(CmRuntimeInfo.getAssetKey(chainId, assetId));
@@ -76,6 +95,7 @@ public class ChainServiceImpl implements ChainService {
      */
     @Override
     public void saveChain(BlockChain blockChain) throws Exception {
+        addChainMagicNumber(blockChain.getMagicNumber());
         chainStorage.save(blockChain.getChainId(), blockChain);
     }
 
@@ -163,7 +183,6 @@ public class ChainServiceImpl implements ChainService {
         blockChain.addCreateAssetId(CmRuntimeInfo.getAssetKey(blockChain.getChainId(), asset.getAssetId()));
         blockChain.addCirculateAssetId(CmRuntimeInfo.getAssetKey(blockChain.getChainId(), asset.getAssetId()));
         saveChain(blockChain);
-
         /*
             通知网络模块创建链
         */
@@ -212,6 +231,11 @@ public class ChainServiceImpl implements ChainService {
         dbChain.setDelete(true);
         updateChain(dbChain);
         return dbChain;
+    }
+
+    @Override
+    public List<BlockChain> getBlockList() throws Exception {
+        return chainStorage.loadAllRegChains();
     }
 
 }

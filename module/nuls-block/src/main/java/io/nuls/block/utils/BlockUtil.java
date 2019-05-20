@@ -187,7 +187,7 @@ public class BlockUtil {
 
         //2.收到的区块可以连到主链,验证通过
         if (blockHeight == masterChainEndHeight + 1 && blockPreviousHash.equals(masterChainEndHash)) {
-            commonLog.debug("chainId:" + chainId + ", received continuous block of masterChain, height:" + blockHeight + ", hash:" + blockHash);
+//            commonLog.debug("chainId:" + chainId + ", received continuous block of masterChain, height:" + blockHeight + ", hash:" + blockHash);
             return Result.getSuccess(BlockErrorCode.SUCCESS);
         }
 
@@ -257,8 +257,7 @@ public class BlockUtil {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
         }
         //4.与分叉链没有关联,进入孤儿链判断流程
         return Result.getFailed(BlockErrorCode.IRRELEVANT_BLOCK);
@@ -316,8 +315,7 @@ public class BlockUtil {
             BlockChainManager.addOrphanChain(chainId, newOrphanChain);
             commonLog.info("chainId:" + chainId + ", received orphan block, height:" + blockHeight + ", hash:" + blockHash);
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
         }
     }
 
@@ -404,10 +402,10 @@ public class BlockUtil {
         HashMessage message = new HashMessage();
         message.setRequestHash(hash);
         ChainContext context = ContextManager.getContext(chainId);
-        int singleDownloadTimeout = context.getParameters().getsingleDownloadTimeout();
+        int singleDownloadTimeout = context.getParameters().getSingleDownloadTimeout();
         NulsLogger commonLog = context.getCommonLog();
         Future<Block> future = BlockCacher.addSingleBlockRequest(chainId, hash);
-        commonLog.debug("get block-" + hash + " from " + nodeId + "begin");
+//        commonLog.debug("get block-" + hash + " from " + nodeId + "begin");
         boolean result = NetworkUtil.sendToNode(chainId, message, nodeId, GET_BLOCK_MESSAGE);
         if (!result) {
             BlockCacher.removeBlockByHashFuture(chainId, hash);
@@ -418,7 +416,6 @@ public class BlockUtil {
             commonLog.debug("get block-" + hash + " from " + nodeId + " success!");
             return block;
         } catch (Exception e) {
-            e.printStackTrace();
             commonLog.error("get block-" + hash + " from " + nodeId + " fail!", e);
             return null;
         } finally {

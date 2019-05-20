@@ -39,13 +39,13 @@ public class RegisterInvoke extends BaseInvoke {
             }
             Map methodMap = (Map) responseData.get("RegisterAPI");
             Map dependMap = (Map) methodMap.get("Dependencies");
-            StringBuilder logInfo = new StringBuilder("\n有模块信息改变，重新同步：\n");
+//            StringBuilder logInfo = new StringBuilder("\n有模块信息改变，重新同步：\n");
             for (Object object : dependMap.entrySet()) {
                 Map.Entry<String, Map> entry = (Map.Entry<String, Map>) object;
-                logInfo.append("注入：[key=").append(entry.getKey()).append(",value=").append(entry.getValue()).append("]\n");
+//                logInfo.append("注入：[key=").append(entry.getKey()).append(",value=").append(entry.getValue()).append("]\n");
                 ConnectManager.ROLE_MAP.put(entry.getKey(), entry.getValue());
             }
-            Log.debug(logInfo.toString());
+//            Log.debug(logInfo.toString());
             ConnectManager.updateStatus();
             if (!ConnectManager.isReady()) {
                 return;
@@ -62,7 +62,7 @@ public class RegisterInvoke extends BaseInvoke {
                         Response cmdResp = null;
                         try {
                             cmdResp = ResponseMessageProcessor.requestAndResponse(entry.getKey(), "registerModuleDependencies", MapUtils.beanToLinkedMap(module));
-                            Log.debug("result : {}", cmdResp);
+//                            Log.debug("result : {}", cmdResp);
                             return cmdResp.isSuccess();
                         } catch (Exception e) {
                             Log.error("Calling remote interface failed. module:{} - interface:{} - message:{}", module, "registerModuleDependencies", e.getMessage());

@@ -245,7 +245,7 @@ public class ConnectManager {
                 if (!isRegister(cmdDetail)) {
                     LOCAL.getMethods().add(cmdDetail);
                     RequestMessageProcessor.handlerMap.put(cmdDetail.getInvokeClass(), SpringLiteContext.getBeanByClass(cmdDetail.getInvokeClass()));
-                    Log.debug("valid cmdDetail-" + cmdDetail);
+//                    Log.debug("valid cmdDetail-" + cmdDetail);
                 } else {
                     throw new Exception(Constants.CMD_DUPLICATE + ":" + cmdDetail.getMethodName() + "-" + cmdDetail.getVersion());
                 }

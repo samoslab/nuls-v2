@@ -11,6 +11,7 @@ import io.nuls.core.rpc.model.message.Response;
 import io.nuls.core.rpc.netty.processor.ResponseMessageProcessor;
 import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.core.exception.NulsException;
+import io.nuls.crosschain.nuls.utils.LoggerUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ public class NetWorkCall {
             Map<String, Object> map = new HashMap<>(2);
             List<Map<String, String>> cmds = new ArrayList<>();
             map.put("role", ModuleE.CC.abbr);
-            List<String> list = List.of(GET_CTX_MESSAGE,GET_OTHER_CTX_MESSAGE,NEW_CTX_MESSAGE,NEW_OTHER_CTX_MESSAGE,VERIFY_CTX_MESSAGE,CTX_VERIFY_RESULT_MESSAGE,GET_CTX_STATE_MESSAGE,CTX_STATE_MESSAGE,BROAD_CTX_HASH_MESSAGE,BROAD_CTX_SIGN_MESSAGE,GET_CIRCULLAT_MESSAGE);
+            List<String> list = List.of(GET_CTX_MESSAGE,GET_OTHER_CTX_MESSAGE,NEW_CTX_MESSAGE,NEW_OTHER_CTX_MESSAGE,VERIFY_CTX_MESSAGE,CTX_VERIFY_RESULT_MESSAGE,GET_CTX_STATE_MESSAGE,CTX_STATE_MESSAGE,BROAD_CTX_HASH_MESSAGE,BROAD_CTX_SIGN_MESSAGE,GET_CIRCULLAT_MESSAGE,REGISTERED_CHAIN_MESSAGE,NulsCrossChainConstant.GET_REGISTERED_CHAIN_MESSAGE);
             for (String s : list) {
                 Map<String, String> cmd = new HashMap<>(2);
                 cmd.put("protocolCmd", s);
@@ -47,9 +48,9 @@ public class NetWorkCall {
                 Thread.sleep(1000L);
                 success = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_protocolRegister", map).isSuccess();
             }
-            return success;
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerUtil.commonLog.error(e);
         }
         return false;
     }
@@ -84,7 +85,7 @@ public class NetWorkCall {
             params.put("isCross", isCross);
             return ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_broadcast", params, NulsCrossChainConstant.RPC_TIME_OUT).isSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerUtil.commonLog.error(e);
             return false;
         }
     }
@@ -108,7 +109,7 @@ public class NetWorkCall {
             boolean success = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_sendPeersMsg", params).isSuccess();
             return success;
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerUtil.commonLog.error(e);
             return false;
         }
     }

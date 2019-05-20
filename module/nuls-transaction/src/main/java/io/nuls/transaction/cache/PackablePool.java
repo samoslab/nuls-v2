@@ -66,12 +66,32 @@ public class PackablePool {
             }
             Transaction tx = chain.getPackableTxMap().get(hash);
             if (null != tx) {
-                chain.getLoggerMap().get(TxConstant.LOG_TX).debug("获取待打包队列里已确认交易数：[{}]", cfmCount);
+                if(cfmCount > 0) {
+                    chain.getLoggerMap().get(TxConstant.LOG_TX).debug("获取待打包队列里已确认交易数：[{}]", cfmCount);
+                }
                 return tx;
             }
             cfmCount++;
         }
+    }
 
+    /**
+     * 获取并移除此双端队列的最后一个元素；如果此双端队列为空，则返回 null
+     * 协议升级时需要重新处理未打包的交易
+     * @param chain
+     * @return
+     */
+    public Transaction pollLast(Chain chain) {
+        while (true) {
+            ByteArrayWrapper hash = chain.getPackableHashQueue().pollLast();
+            if(null == hash){
+                return null;
+            }
+            Transaction tx = chain.getPackableTxMap().get(hash);
+            if (null != tx) {
+                return tx;
+            }
+        }
     }
 
     public void clearConfirmedTxs(Chain chain, List<byte[]> txHashs) {

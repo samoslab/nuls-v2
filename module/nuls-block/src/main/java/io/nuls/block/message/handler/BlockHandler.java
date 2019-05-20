@@ -56,22 +56,21 @@ public class BlockHandler extends BaseCmd {
     public Response process(Map map) {
         int chainId = Integer.parseInt(map.get("chainId").toString());
         NulsLogger messageLog = ContextManager.getContext(chainId).getMessageLog();
-        String nodeId = map.get("nodeId").toString();
+//        String nodeId = map.get("nodeId").toString();
         BlockMessage message = new BlockMessage();
         try {
             byte[] decode = RPCUtil.decode(map.get("messageBody").toString());
             message.parse(new NulsByteBuffer(decode));
         } catch (NulsException e) {
-            e.printStackTrace();
-            messageLog.error(e);
+            messageLog.error("", e);
             return failed(BlockErrorCode.PARAMETER_ERROR);
         }
-        Block block = message.getBlock();
-        if (block == null) {
-            messageLog.debug("recieve null BlockMessage from node-" + nodeId + ", chainId:" + chainId + ", msghash:" + message.getRequestHash());
-        } else {
-            messageLog.debug("recieve BlockMessage from node-" + nodeId + ", chainId:" + chainId + ", hash:" + block.getHeader().getHash() + ", height-" + block.getHeader().getHeight());
-        }
+//        Block block = message.getBlock();
+//        if (block == null) {
+//            messageLog.debug("recieve null BlockMessage from node-" + nodeId + ", chainId:" + chainId + ", msghash:" + message.getRequestHash());
+//        } else {
+//            messageLog.debug("recieve BlockMessage from node-" + nodeId + ", chainId:" + chainId + ", hash:" + block.getHeader().getHash() + ", height-" + block.getHeader().getHeight());
+//        }
         BlockCacher.receiveBlock(chainId, message);
         return success();
     }

@@ -27,8 +27,10 @@ import io.nuls.block.model.ChainContext;
 import io.nuls.block.service.BlockService;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
+import io.nuls.core.log.Log;
 import io.nuls.core.log.logback.NulsLogger;
 import io.nuls.core.rpc.model.ModuleE;
+import io.nuls.core.rpc.model.message.Response;
 import io.nuls.core.rpc.netty.processor.ResponseMessageProcessor;
 import io.nuls.core.rpc.util.RPCUtil;
 
@@ -36,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 调用共识模块接口的工具类
@@ -48,10 +51,11 @@ import java.util.Map;
 public class ConsensusUtil {
     @Autowired
     private static BlockService service;
+
     /**
      * 共识验证
      *
-     * @param chainId 链Id/chain id
+     * @param chainId  链Id/chain id
      * @param block
      * @param download 0区块下载中,1接收到最新区块
      * @return
@@ -60,15 +64,17 @@ public class ConsensusUtil {
         NulsLogger commonLog = ContextManager.getContext(chainId).getCommonLog();
         try {
             Map<String, Object> params = new HashMap<>(5);
-//            params.put(Constants.VERSION_KEY_STR, "1.0");
             params.put("chainId", chainId);
             params.put("download", download);
             params.put("block", RPCUtil.encode(block.serialize()));
-
-            return ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_validBlock", params).isSuccess();
+            long checkStart = System.currentTimeMillis();
+            boolean response = ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_validBlock", params).isSuccess();
+            if (block.getHeader().getTxCount() > 4000) {
+                Log.debug("[{}] send poc use:{}", block.getHeader().getHeight(), System.currentTimeMillis() - checkStart);
+            }
+            return response;
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -89,8 +95,7 @@ public class ConsensusUtil {
             params.put("status", status);
             return ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_updateAgentStatus", params).isSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -118,8 +123,14 @@ public class ConsensusUtil {
             return true;
         }
         List<byte[]> packingAddressList = context.getPackingAddressList();
-        if (packingAddressList.contains(masterHeaderPackingAddress)) {
-            return true;
+        //May 19th 2019 EdwardChan 对于List中的字节数组不能使用contains来进行判断,因为equals方法不能用来判断字节数组中的内容是否相等
+        //if (packingAddressList.contains(masterHeaderPackingAddress)) {
+        //    return true;
+        //}
+        for (byte[] tmp : packingAddressList) {
+            if (Arrays.equals(tmp,masterHeaderPackingAddress)) {
+                return true;
+            }
         }
         packingAddressList.add(masterHeaderPackingAddress);
         try {
@@ -131,8 +142,7 @@ public class ConsensusUtil {
 
             return ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_addEvidenceRecord", params).isSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -153,8 +163,7 @@ public class ConsensusUtil {
 
             return ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_chainRollBack", params).isSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -162,7 +171,7 @@ public class ConsensusUtil {
     /**
      * 新增区块时通知共识模块
      *
-     * @param chainId 链Id/chain id
+     * @param chainId   链Id/chain id
      * @param localInit
      * @return
      */
@@ -180,8 +189,7 @@ public class ConsensusUtil {
 
             return ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_addBlock", params).isSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }

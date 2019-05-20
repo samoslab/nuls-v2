@@ -4,6 +4,7 @@ import io.nuls.base.basic.NulsByteBuffer;
 import io.nuls.base.data.Block;
 import io.nuls.base.data.BlockHeader;
 import io.nuls.core.core.annotation.Component;
+import io.nuls.core.log.Log;
 import io.nuls.poc.constant.ConsensusConstant;
 import io.nuls.poc.constant.ConsensusErrorCode;
 import io.nuls.poc.model.bo.Chain;
@@ -42,6 +43,7 @@ public class BlockServiceImpl implements BlockService {
 
     @Autowired
     private BlockValidator blockValidator;
+
     /**
      * 缓存最新区块
      */
@@ -114,9 +116,9 @@ public class BlockServiceImpl implements BlockService {
         try {
             List<String> headerList = (List<String>) params.get(ConsensusConstant.HEADER_LIST);
             List<BlockHeader> blockHeaderList = new ArrayList<>();
-            for (String header:headerList) {
+            for (String header : headerList) {
                 BlockHeader blockHeader = new BlockHeader();
-                blockHeader.parse(RPCUtil.decode(header),0);
+                blockHeader.parse(RPCUtil.decode(header), 0);
                 blockHeaderList.add(blockHeader);
             }
             List<BlockHeader> localBlockHeaders = chain.getBlockHeaderList();
@@ -135,10 +137,14 @@ public class BlockServiceImpl implements BlockService {
      */
     @Override
     public Result validBlock(Map<String, Object> params) {
+        long checkStart = System.currentTimeMillis();
+
         if (params == null) {
             return Result.getFailed(ConsensusErrorCode.PARAM_ERROR);
         }
         ValidBlockDTO dto = JSONUtils.map2pojo(params, ValidBlockDTO.class);
+        long jsonUse = System.currentTimeMillis() - checkStart;
+        checkStart = System.currentTimeMillis();
         if (dto.getChainId() <= ConsensusConstant.MIN_VALUE || dto.getBlock() == null) {
             return Result.getFailed(ConsensusErrorCode.PARAM_ERROR);
         }
@@ -155,7 +161,13 @@ public class BlockServiceImpl implements BlockService {
         try {
             Block block = new Block();
             block.parse(new NulsByteBuffer(RPCUtil.decode(blockHex)));
+            long parseuse = System.currentTimeMillis() - checkStart;
+            checkStart = System.currentTimeMillis();
             blockValidator.validate(isDownload, chain, block);
+            if (block.getHeader().getTxCount() > 4000) {
+                long verifyUse = System.currentTimeMillis() - checkStart;
+                Log.debug("jsonUse :{} , parseUse :{} , verify use:{}", jsonUse, parseuse, verifyUse);
+            }
             return Result.getSuccess(ConsensusErrorCode.SUCCESS);
         } catch (NulsException e) {
             chain.getLoggerMap().get(ConsensusConstant.BASIC_LOGGER_NAME).error(e);

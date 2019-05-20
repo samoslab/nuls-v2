@@ -235,12 +235,12 @@ public class ValidatorCmd extends BaseLedgerCmd {
         }
         long blockHeight = Long.valueOf(params.get("blockHeight").toString());
         List<String> txStrList = (List) params.get("txList");
-        LoggerUtil.logger(chainId).debug("chainId={} blockHeight={} blockValidate", chainId, blockHeight);
+//        LoggerUtil.logger(chainId).debug("chainId={} blockHeight={} blockValidate", chainId, blockHeight);
         if (null == txStrList || 0 == txStrList.size()) {
             LoggerUtil.logger(chainId).error("txStrList is blank");
             return failed("txStrList is blank");
         }
-        LoggerUtil.logger(chainId).debug("commitBlockTxs txHexListSize={}", txStrList.size());
+//        LoggerUtil.logger(chainId).debug("commitBlockTxs txHexListSize={}", txStrList.size());
         List<Transaction> txList = new ArrayList<>();
         Response parseResponse = parseTxs(txStrList, txList, chainId);
         if (!parseResponse.isSuccess()) {
@@ -253,7 +253,7 @@ public class ValidatorCmd extends BaseLedgerCmd {
         } else {
             rtData.put("value", false);
         }
-        LoggerUtil.logger(chainId).debug("chainId={} blockHeight={},return={}", chainId, blockHeight, success(rtData));
+//        LoggerUtil.logger(chainId).debug("chainId={} blockHeight={},return={}", chainId, blockHeight, success(rtData));
         return success(rtData);
     }
 }

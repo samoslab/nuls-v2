@@ -32,6 +32,7 @@ import io.nuls.chain.info.CmErrorCode;
 import io.nuls.chain.info.CmRuntimeInfo;
 import io.nuls.chain.info.RpcConstants;
 import io.nuls.chain.model.dto.AccountBalance;
+import io.nuls.chain.model.dto.ChainAssetTotalCirculate;
 import io.nuls.chain.model.po.BlockChain;
 import io.nuls.chain.rpc.call.RpcService;
 import io.nuls.chain.util.LoggerUtil;
@@ -45,6 +46,7 @@ import io.nuls.core.rpc.model.message.Response;
 import io.nuls.core.rpc.netty.processor.ResponseMessageProcessor;
 import io.nuls.core.rpc.util.RPCUtil;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -70,9 +72,26 @@ public class RpcServiceImpl implements RpcService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerUtil.logger().error(e);
         }
         return null;
+    }
+
+    @Override
+    public long getMainNetMagicNumber() {
+        try {
+            Map<String, Object> map = new HashMap<>();
+            Response response = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, RpcConstants.CMD_NW_GET_MAIN_NET_MAGIC_NUMBER, map);
+            if (response.isSuccess()) {
+                Map rtMap = ResponseUtil.getResultMap(response, RpcConstants.CMD_NW_GET_MAIN_NET_MAGIC_NUMBER);
+                if (null != rtMap) {
+                    return Long.valueOf(rtMap.get("value").toString());
+                }
+            }
+        } catch (Exception e) {
+            LoggerUtil.logger().error(e);
+        }
+        return 0;
     }
 
     @Override
@@ -162,7 +181,7 @@ public class RpcServiceImpl implements RpcService {
             Response response = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, RpcConstants.CMD_NW_CREATE_NODEGROUP, map);
             return response.isSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerUtil.logger().error(e);
             return false;
         }
 
@@ -176,7 +195,21 @@ public class RpcServiceImpl implements RpcService {
             Response response = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, RpcConstants.CMD_NW_DELETE_NODEGROUP, map);
             return response.isSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerUtil.logger().error(e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean requestCrossIssuingAssets(int chainId, String assetIds) {
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("chainId", chainId);
+            map.put("assetIds", assetIds);
+            Response response = ResponseMessageProcessor.requestAndResponse(ModuleE.CC.abbr, RpcConstants.CMD_GET_FRIEND_CHAIN_CIRCULATE, map);
+            return response.isSuccess();
+        } catch (Exception e) {
+            LoggerUtil.logger().error(e);
             return false;
         }
     }
@@ -188,7 +221,7 @@ public class RpcServiceImpl implements RpcService {
             map.put("chainId", CmRuntimeInfo.getMainIntChainId());
             map.put("assetChainId", CmRuntimeInfo.getMainIntChainId());
             map.put("assetId", CmRuntimeInfo.getMainIntAssetId());
-            map.put("address",address);
+            map.put("address", address);
             Response response = ResponseMessageProcessor.requestAndResponse(ModuleE.LG.abbr, RpcConstants.CMD_LG_GET_COINDATA, map);
             if (!response.isSuccess()) {
                 return ErrorCode.init(response.getResponseErrorCode());
@@ -207,6 +240,33 @@ public class RpcServiceImpl implements RpcService {
             return CmErrorCode.ERROR_LEDGER_BALANCE_RPC;
         }
         return null;
+    }
+
+    @Override
+    public List<ChainAssetTotalCirculate> getLgAssetsById(int chainId, String assetIds) {
+        List<ChainAssetTotalCirculate> list = new ArrayList<>();
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("chainId", chainId);
+            map.put("assetIds", assetIds);
+            Response response = ResponseMessageProcessor.requestAndResponse(ModuleE.LG.abbr, RpcConstants.CMD_LG_GET_ASSETS_BY_ID, map);
+            if (response.isSuccess()) {
+                Map<String, Object> assetsMap = ResponseUtil.getResultMap(response, RpcConstants.CMD_LG_GET_ASSETS_BY_ID);
+                List<Map<String, Object>> assets = (List) assetsMap.get("assets");
+                for (Map<String, Object> asset : assets) {
+                    ChainAssetTotalCirculate chainAssetTotalCirculate = new ChainAssetTotalCirculate();
+                    chainAssetTotalCirculate.setChainId(chainId);
+                    chainAssetTotalCirculate.setFreeze(new BigInteger(asset.get("freeze").toString()));
+                    chainAssetTotalCirculate.setAvailableAmount(new BigInteger(asset.get("availableAmount").toString()));
+                    chainAssetTotalCirculate.setAssetId(Integer.valueOf(asset.get("assetId").toString()));
+                    list.add(chainAssetTotalCirculate);
+                }
+            }
+        } catch (Exception e) {
+            LoggerUtil.logger().error("get AccountBalance error....");
+            LoggerUtil.logger().error(e);
+        }
+        return list;
     }
 
     /**
@@ -282,6 +342,7 @@ public class RpcServiceImpl implements RpcService {
         }
         return null;
     }
+
     @Override
     public long getTime() {
         long time = 0;
