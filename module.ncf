@@ -15,12 +15,12 @@ mainAssetId=1
 blackHoleAddress=tNULSeBaMkqeHbTxwKqyquFcbewVTUDHPkF11o
 
 [network]
-port=5555
-crossPort=28001
+port=18001
+crossPort=18002
 #魔法参数
-packetMagic=19900913
+packetMagic=20201121
 #种子节点
-selfSeedIps=192.168.1.32:5555,192.168.1.191:5555,192.168.1.247:5555,192.168.1.192:5555,192.168.1.135:5555
+selfSeedIps=192.168.1.131:18001,192.168.1.132:18001,192.168.1.133:18001,192.168.1.134:18001,192.168.1.37:18001
 
 [account]
 keystoreFolder=/keystore/backup
@@ -89,7 +89,7 @@ cleanParam=2
 cachedBlockSizeLimit=26214400
 
 [consensus]
-seedNodes=tNULSeBaMkwmNkUJGBkdAkUaddbTnQ1tzBUqkT,tNULSeBaMhwGMdTsVZC6Gg8ad5XA8CjZpR95MK,tNULSeBaMjESuVomqR74SbUmTHwQGEKAeE9awT,tNULSeBaMtsumpXhfEZBU2pMEz7SHLcx5b2TQr,tNULSeBaMqt2J3V8TdY69Gwb2yPCpeRaHn5tW6
+seedNodes=tNULSeBaMkrt4z9FYEkkR9D6choPVvQr94oYZp,tNULSeBaMoGr2RkLZPfJeS5dFzZeNj1oXmaYNe,tNULSeBaMnG8hGcyeygVeyaL5cXV38bQm1rw9M,tNULSeBaMtFXBLB35WSAnoN9ezGLLCbh7sPNNN
 password=nuls123456
 packingInterval=10
 dataPath=../../../../../data
@@ -120,6 +120,6 @@ minNodeAmount=8
 maxNodeAmount=10
 sendHeight=5
 byzantineRatio=50
-crossSeedIps=192.168.1.61:11111
+crossSeedIps=192.168.1.131:18002
 dataPath=../../../../../data
 logPath=../../../../../Logs
