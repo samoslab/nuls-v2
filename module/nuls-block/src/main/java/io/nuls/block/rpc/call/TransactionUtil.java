@@ -71,8 +71,7 @@ public class TransactionUtil {
                 return List.of();
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return List.of();
         }
     }
@@ -115,8 +114,7 @@ public class TransactionUtil {
             }
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -165,8 +163,7 @@ public class TransactionUtil {
             }
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -197,8 +194,7 @@ public class TransactionUtil {
             }
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -238,8 +234,7 @@ public class TransactionUtil {
                 return null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return null;
         }
         return transactions;
@@ -284,8 +279,7 @@ public class TransactionUtil {
                 return null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return null;
         }
         return transactions;
@@ -320,8 +314,7 @@ public class TransactionUtil {
                 return null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return null;
         }
     }
@@ -355,8 +348,7 @@ public class TransactionUtil {
                 return null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return null;
         }
     }
@@ -379,7 +371,7 @@ public class TransactionUtil {
                 try {
                     list.add(RPCUtil.encode(e.serialize()));
                 } catch (Exception e1) {
-                    e1.printStackTrace();
+                    commonLog.error("", e1);
                 }
             });
             params.put("txList", list);
@@ -392,8 +384,7 @@ public class TransactionUtil {
             }
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
@@ -420,8 +411,7 @@ public class TransactionUtil {
             }
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
-            commonLog.error(e);
+            commonLog.error("", e);
             return false;
         }
     }
