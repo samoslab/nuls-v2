@@ -28,6 +28,7 @@ import io.nuls.base.data.Transaction;
 import io.nuls.base.data.po.BlockHeaderPo;
 import io.nuls.block.manager.ContextManager;
 import io.nuls.block.utils.BlockUtil;
+import io.nuls.core.log.Log;
 import io.nuls.core.log.logback.NulsLogger;
 import io.nuls.core.rpc.model.ModuleE;
 import io.nuls.core.rpc.model.message.Response;
@@ -84,6 +85,7 @@ public class TransactionUtil {
      * @return
      */
     public static boolean verify(int chainId, List<Transaction> transactions, BlockHeader header, BlockHeader lastHeader) {
+        long checkStart = System.currentTimeMillis();
         NulsLogger commonLog = ContextManager.getContext(chainId).getCommonLog();
         try {
             Map<String, Object> params = new HashMap<>(2);
@@ -98,7 +100,14 @@ public class TransactionUtil {
             lastData.parse(new NulsByteBuffer(lastHeader.getExtend()));
             params.put("preStateRoot", RPCUtil.encode(lastData.getStateRoot()));
             params.put("blockHeader", RPCUtil.encode(header.serialize()));
+            if (header.getTxCount() > 4000) {
+                Log.info("[{}] send txs use(ms) :{}", header.getHeight(),System.currentTimeMillis() - checkStart);
+                checkStart = System.currentTimeMillis();
+            }
             Response response = ResponseMessageProcessor.requestAndResponse(ModuleE.TX.abbr, "tx_batchVerify", params);
+            if (header.getTxCount() > 4000) {
+                Log.info("[{}] send txs use(ms) :{}", header.getHeight(),System.currentTimeMillis() - checkStart);
+            }
             if (response.isSuccess()) {
                 Map responseData = (Map) response.getResponseData();
                 Map v = (Map) responseData.get("tx_batchVerify");
@@ -392,7 +401,7 @@ public class TransactionUtil {
     /**
      * 批量保存交易
      *
-     * @param chainId       链Id/chain id
+     * @param chainId 链Id/chain id
      * @param height
      * @return
      */

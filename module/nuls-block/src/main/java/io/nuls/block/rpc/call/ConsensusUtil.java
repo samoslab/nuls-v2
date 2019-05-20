@@ -27,8 +27,10 @@ import io.nuls.block.model.ChainContext;
 import io.nuls.block.service.BlockService;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
+import io.nuls.core.log.Log;
 import io.nuls.core.log.logback.NulsLogger;
 import io.nuls.core.rpc.model.ModuleE;
+import io.nuls.core.rpc.model.message.Response;
 import io.nuls.core.rpc.netty.processor.ResponseMessageProcessor;
 import io.nuls.core.rpc.util.RPCUtil;
 
@@ -48,10 +50,11 @@ import java.util.Map;
 public class ConsensusUtil {
     @Autowired
     private static BlockService service;
+
     /**
      * 共识验证
      *
-     * @param chainId 链Id/chain id
+     * @param chainId  链Id/chain id
      * @param block
      * @param download 0区块下载中,1接收到最新区块
      * @return
@@ -60,12 +63,15 @@ public class ConsensusUtil {
         NulsLogger commonLog = ContextManager.getContext(chainId).getCommonLog();
         try {
             Map<String, Object> params = new HashMap<>(5);
-//            params.put(Constants.VERSION_KEY_STR, "1.0");
             params.put("chainId", chainId);
             params.put("download", download);
             params.put("block", RPCUtil.encode(block.serialize()));
-
-            return ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_validBlock", params).isSuccess();
+            long checkStart = System.currentTimeMillis();
+            boolean response = ResponseMessageProcessor.requestAndResponse(ModuleE.CS.abbr, "cs_validBlock", params).isSuccess();
+            if (block.getHeader().getTxCount() > 4000) {
+                Log.debug("[{}] send poc use:{}", block.getHeader().getHeight(), System.currentTimeMillis() - checkStart);
+            }
+            return response;
         } catch (Exception e) {
             e.printStackTrace();
             commonLog.error(e);
@@ -162,7 +168,7 @@ public class ConsensusUtil {
     /**
      * 新增区块时通知共识模块
      *
-     * @param chainId 链Id/chain id
+     * @param chainId   链Id/chain id
      * @param localInit
      * @return
      */
