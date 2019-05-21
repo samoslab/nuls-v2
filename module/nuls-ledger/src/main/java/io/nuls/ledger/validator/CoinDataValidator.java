@@ -259,6 +259,9 @@ public class CoinDataValidator {
                     return ValidateResult.getResult(ValidateEnum.FAIL_CODE, new String[]{AddressTool.getStringAddressByBytes(coinFrom.getAddress()), LedgerUtil.getNonceEncode(coinFrom.getNonce()), "address Not local chain Exception"});
                 }
             }
+            if(AddressTool.isBlackHoleAddress(LedgerConstant.blackHolePublicKey,chainId,coinFrom.getAddress())){
+                return ValidateResult.getResult(ValidateEnum.FAIL_CODE, new String[]{AddressTool.getStringAddressByBytes(coinFrom.getAddress()), LedgerUtil.getNonceEncode(coinFrom.getNonce()), "address is blackHoleAddress Exception"});
+            }
             String address = AddressTool.getStringAddressByBytes(coinFrom.getAddress());
             String assetKey = LedgerUtil.getKeyStr(address, coinFrom.getAssetsChainId(), coinFrom.getAssetsId());
             AccountState accountState = accountStateMap.get(assetKey);
@@ -468,7 +471,6 @@ public class CoinDataValidator {
                         return ValidateResult.getResult(ValidateEnum.ORPHAN_CODE, new String[]{address, fromCoinNonceStr, LedgerUtil.getNonceEncode(accountState.getNonce())});
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
                     LoggerUtil.logger(chainId).error(e);
                     return ValidateResult.getResult(ValidateEnum.FAIL_CODE, new String[]{address, fromCoinNonceStr, "validate Exception"});
                 }
@@ -563,7 +565,7 @@ public class CoinDataValidator {
                 return ValidateResult.getResult(ValidateEnum.TX_EXIST_CODE, new String[]{"--", txHash});
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerUtil.logger(chainId).error(e);
         }
         CoinData coinData = CoinDataUtil.parseCoinData(tx.getCoinData());
         if (null == coinData) {
