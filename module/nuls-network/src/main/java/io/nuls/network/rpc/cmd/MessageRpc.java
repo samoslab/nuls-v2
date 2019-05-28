@@ -25,6 +25,7 @@
 package io.nuls.network.rpc.cmd;
 
 import io.nuls.core.core.annotation.Component;
+import io.nuls.core.log.Log;
 import io.nuls.core.rpc.cmd.BaseCmd;
 import io.nuls.core.rpc.model.CmdAnnotation;
 import io.nuls.core.rpc.model.Parameter;
@@ -40,9 +41,7 @@ import io.nuls.network.manager.handler.MessageHandlerFactory;
 import io.nuls.network.model.NetworkEventResult;
 import io.nuls.network.model.Node;
 import io.nuls.network.model.NodeGroup;
-import io.nuls.network.model.dto.ProtocolRoleHandler;
 import io.nuls.network.model.message.base.MessageHeader;
-import io.nuls.network.model.po.ProtocolHandlerPo;
 import io.nuls.network.model.po.RoleProtocolPo;
 import io.nuls.network.utils.LoggerUtil;
 
@@ -66,20 +65,16 @@ public class MessageRpc extends BaseCmd {
     @Parameter(parameterName = "role", parameterType = "string")
     @Parameter(parameterName = "protocolCmds", parameterType = "arrays")
     public Response protocolRegister(Map params) {
+        String role = String.valueOf(params.get("role"));
         try {
-            String role = String.valueOf(params.get("role"));
             /*
              * 如果外部模块修改了调用注册信息，进行重启，则清理缓存信息，并重新注册
              * clear cache protocolRoleHandler
              */
             messageHandlerFactory.clearCacheProtocolRoleHandlerMap(role);
-            List<Map<String, String>> protocolCmds = (List<Map<String, String>>) params.get("protocolCmds");
-            List<ProtocolHandlerPo> protocolHandlerPos = new ArrayList<>();
-            for (Map map : protocolCmds) {
-                ProtocolRoleHandler protocolRoleHandler = new ProtocolRoleHandler(role, map.get("handler").toString());
-                messageHandlerFactory.addProtocolRoleHandlerMap(map.get("protocolCmd").toString(), protocolRoleHandler);
-                ProtocolHandlerPo protocolHandlerPo = new ProtocolHandlerPo(map.get("protocolCmd").toString(), map.get("handler").toString());
-                protocolHandlerPos.add(protocolHandlerPo);
+            List<String> protocolCmds = (List<String>) params.get("protocolCmds");
+            for (String cmd : protocolCmds) {
+                messageHandlerFactory.addProtocolRoleHandlerMap(cmd, role);
             }
             /*
              * 进行持久化存库
@@ -87,12 +82,12 @@ public class MessageRpc extends BaseCmd {
              */
             RoleProtocolPo roleProtocolPo = new RoleProtocolPo();
             roleProtocolPo.setRole(role);
-            roleProtocolPo.setProtocolHandlerPos(protocolHandlerPos);
+            roleProtocolPo.setProtocolCmds(protocolCmds);
             StorageManager.getInstance().getDbService().saveOrUpdateProtocolRegisterInfo(roleProtocolPo);
-            LoggerUtil.logger().info("----------------------------new message register---------------------------");
-            LoggerUtil.logger().info(roleProtocolPo.toString());
+            Log.info("----------------------------new message register---------------------------");
+            Log.info(roleProtocolPo.toString());
         } catch (Exception e) {
-            LoggerUtil.logger().error("", e);
+            Log.error(role, e);
             return failed(NetworkErrorCode.PARAMETER_ERROR);
         }
         return success();
@@ -110,6 +105,8 @@ public class MessageRpc extends BaseCmd {
     @Parameter(parameterName = "command", parameterType = "string")
     @Parameter(parameterName = "isCross", parameterType = "boolean")
     public Response broadcast(Map params) {
+        Map<String, Object> rtMap = new HashMap<>();
+        rtMap.put("value", true);
         try {
             int chainId = Integer.valueOf(String.valueOf(params.get("chainId")));
             String excludeNodes = String.valueOf(params.get("excludeNodes"));
@@ -144,12 +141,16 @@ public class MessageRpc extends BaseCmd {
                     /*end test code*/
                 }
             }
-            messageManager.broadcastToNodes(message, nodes, true);
+            if (0 == nodes.size()) {
+                rtMap.put("value", false);
+            } else {
+                messageManager.broadcastToNodes(message, nodes, true);
+            }
         } catch (Exception e) {
-            LoggerUtil.logger().error("", e);
+            Log.error(e);
             return failed(NetworkErrorCode.PARAMETER_ERROR);
         }
-        return success();
+        return success(rtMap);
     }
 
     /**
@@ -205,7 +206,7 @@ public class MessageRpc extends BaseCmd {
                 }
             }
         } catch (Exception e) {
-            LoggerUtil.logger().error("", e);
+            Log.error(e);
             return failed(NetworkErrorCode.PARAMETER_ERROR);
         }
         return success(sendNodes);
@@ -254,7 +255,7 @@ public class MessageRpc extends BaseCmd {
             }
             NetworkEventResult networkEventResult = messageManager.broadcastToNodes(message, nodesList, true);
         } catch (Exception e) {
-            LoggerUtil.logger().error("", e);
+            Log.error(e);
             return failed(NetworkErrorCode.PARAMETER_ERROR);
         }
         return success();

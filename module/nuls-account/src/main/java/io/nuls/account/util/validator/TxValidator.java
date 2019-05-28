@@ -37,14 +37,12 @@ import io.nuls.base.basic.TransactionFeeCalculator;
 import io.nuls.base.data.*;
 import io.nuls.base.signture.MultiSignTxSignature;
 import io.nuls.base.signture.SignatureUtil;
-import io.nuls.core.constant.TxType;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.crypto.HexUtil;
 import io.nuls.core.exception.NulsException;
 import io.nuls.core.model.BigIntegerUtils;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -65,42 +63,6 @@ public class TxValidator {
     private MultiSignAccountService multiSignAccountService;
 
     /**
-     * 验证交易
-     * Verifying transactions
-     *
-     * @param chainId 链ID/chain id
-     * @param tx      交易/transaction info
-     * @return boolean
-     */
-    public boolean validateTx(int chainId, Transaction tx) throws NulsException, IOException {
-        switch (tx.getType()) {
-            case (TxType.TRANSFER):
-                return transferTxValidate(chainId, tx);
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * 转账交易验证
-     * transfer transaction validation
-     *
-     * @param chainId 链ID/chain id
-     * @param tx      转账交易/transfer transaction
-     * @return boolean
-     */
-    private boolean transferTxValidate(int chainId, Transaction tx) throws NulsException {
-        Chain chain = chainManager.getChainMap().get(chainId);
-        if (chain == null) {
-            throw new NulsException(AccountErrorCode.CHAIN_NOT_EXIST);
-        }
-        if (!txValidate(chain, tx)) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * 交易类型
      * from的地址必须是发起链的地址（from里面的资产是否存在）
      * to的地址必须是发起链的地址（to里面的资产是否存在）
@@ -113,13 +75,18 @@ public class TxValidator {
      * @param tx
      * @return Result
      */
-    private boolean txValidate(Chain chain, Transaction tx) throws NulsException {
+    public boolean validate(Chain chain, Transaction tx) throws NulsException {
         //coinData基础验证以及手续费 (from中所有的当前链主资产-to中所有的当前链主资产)
         CoinData coinData = TxUtil.getCoinData(tx);
         if (!validateCoinFromBase(chain, coinData.getFrom())) {
             return false;
         }
         if (!validateCoinToBase(chain, coinData.getTo())) {
+            return false;
+        }
+        // 验证除了手续费以外的资产 from中的资产金额与to中的资产金额要对应相等
+        //todo
+        if (!validateCoinDataAsset(chain, coinData)) {
             return false;
         }
          /*交易模块基础校验已验证
@@ -130,6 +97,49 @@ public class TxValidator {
         if (!validateSign(chain, tx, coinData)) {
             return false;
         }*/
+        return true;
+    }
+
+    /**
+     * 验证除了手续费以外的资产 from中的资产金额与to中的资产金额要对应相等
+     * @return
+     */
+    public boolean validateCoinDataAsset(Chain chain, CoinData coinData){
+        //from中资产id-资产链id作为key，存一个资产的金额总和
+        Map<String, BigInteger> mapFrom = new HashMap<>(AccountConstant.INIT_CAPACITY_8);
+        for (CoinFrom coinFrom : coinData.getFrom()) {
+            if (!TxUtil.isChainAssetExist(chain, coinFrom)) {
+                String key = coinFrom.getAssetsChainId() + "-" + coinFrom.getAssetsId();
+                BigInteger amount = mapFrom.get(key);
+                if(null != amount) {
+                    amount = amount.add(coinFrom.getAmount());
+                }else{
+                    amount = coinFrom.getAmount();
+                }
+                mapFrom.put(key, amount);
+            }
+        }
+        //to中资产id-资产链id作为key，存一个资产的金额总和
+        Map<String, BigInteger> mapTo = new HashMap<>(AccountConstant.INIT_CAPACITY_8);
+        for (CoinTo coinTO : coinData.getTo()) {
+            if (!TxUtil.isChainAssetExist(chain, coinTO)) {
+                String key = coinTO.getAssetsChainId() + "-" + coinTO.getAssetsId();
+                BigInteger amount = mapTo.get(key);
+                if(null != amount) {
+                    amount = amount.add(coinTO.getAmount());
+                }else{
+                    amount = coinTO.getAmount();
+                }
+                mapTo.put(key, amount);
+            }
+        }
+        //比较from和to相同资产的值是否相等
+        for(Map.Entry<String, BigInteger> entry : mapFrom.entrySet()){
+            if(entry.getValue().compareTo(mapTo.get(entry.getKey())) != 0){
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -190,7 +200,7 @@ public class TxValidator {
             int assetsChainId = coinFrom.getAssetsChainId();
             int assetsId = coinFrom.getAssetsId();
             //黑洞地址不能发起转账
-            if(Arrays.equals(NulsConfig.BLACK_HOLE_ADDRESS, coinFrom.getAddress())){
+            if(AddressTool.isBlackHoleAddress(NulsConfig.BLACK_HOLE_PUB_KEY,addrChainId,coinFrom.getAddress())){
                 throw new NulsException(AccountErrorCode.ADDRESS_TRANSFER_BAN);
             }
             // 发送方from中地址和资产对应的链id必须是发起链的id
@@ -199,7 +209,7 @@ public class TxValidator {
             }
             // 链中是否存在该资产
             // TODO: 2019/3/23 如果链本身支持多个资产, 那需要修改此验证
-            if (chain.getConfig().getAssetsId() != assetsId) {
+            if (chain.getConfig().getAssetId() != assetsId) {
                 throw new NulsException(AccountErrorCode.ASSETID_ERROR);
             }
         }
@@ -229,7 +239,7 @@ public class TxValidator {
                 throw new NulsException(AccountErrorCode.CHAINID_ERROR);
             }
             // 链中是否存在该资产
-            if (chain.getConfig().getAssetsId() != assetsId) {
+            if (chain.getConfig().getAssetId() != assetsId) {
                 throw new NulsException(AccountErrorCode.ASSETID_ERROR);
             }
             //验证账户地址,资产链id,资产id的组合唯一性
@@ -289,5 +299,4 @@ public class TxValidator {
         }
         return fee;
     }
-
 }

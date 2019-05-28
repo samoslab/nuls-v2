@@ -2,18 +2,18 @@ package io.nuls.transaction.rpc.cmd;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.nuls.base.data.BlockHeader;
-import io.nuls.base.data.NulsDigestData;
+import io.nuls.base.data.NulsHash;
 import io.nuls.base.data.Transaction;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.exception.NulsException;
-import io.nuls.core.log.Log;
 import io.nuls.core.model.ObjectUtils;
 import io.nuls.core.parse.JSONUtils;
 import io.nuls.core.rpc.cmd.BaseCmd;
 import io.nuls.core.rpc.model.CmdAnnotation;
 import io.nuls.core.rpc.model.Parameter;
 import io.nuls.core.rpc.model.message.Response;
+import io.nuls.core.rpc.protocol.TxRegisterDetail;
 import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.transaction.cache.PackablePool;
 import io.nuls.transaction.constant.TxCmd;
@@ -26,7 +26,6 @@ import io.nuls.transaction.model.bo.TxPackage;
 import io.nuls.transaction.model.bo.TxRegister;
 import io.nuls.transaction.model.bo.VerifyLedgerResult;
 import io.nuls.transaction.model.dto.ModuleTxRegisterDTO;
-import io.nuls.transaction.model.dto.TxRegisterDTO;
 import io.nuls.transaction.model.po.TransactionConfirmedPO;
 import io.nuls.transaction.rpc.call.NetworkCall;
 import io.nuls.transaction.service.ConfirmedTxService;
@@ -66,9 +65,6 @@ public class TransactionCmd extends BaseCmd {
     @CmdAnnotation(cmd = TxCmd.TX_REGISTER, version = 1.0, description = "module transaction registration")
     @Parameter(parameterName = "chainId", parameterType = "int")
     @Parameter(parameterName = "moduleCode", parameterType = "String")
-    @Parameter(parameterName = "moduleValidator", parameterType = "String")
-    @Parameter(parameterName = "moduleCommit", parameterType = "String")
-    @Parameter(parameterName = "moduleRollback", parameterType = "String")
     @Parameter(parameterName = "list", parameterType = "List")
     public Response register(Map params) {
         Map<String, Boolean> map = new HashMap<>(TxConstant.INIT_CAPACITY_2);
@@ -77,21 +73,17 @@ public class TransactionCmd extends BaseCmd {
         try {
             ObjectUtils.canNotEmpty(params.get("chainId"), TxErrorCode.PARAMETER_ERROR.getMsg());
             ObjectUtils.canNotEmpty(params.get("moduleCode"), TxErrorCode.PARAMETER_ERROR.getMsg());
-            ObjectUtils.canNotEmpty(params.get("moduleValidator"), TxErrorCode.PARAMETER_ERROR.getMsg());
-            ObjectUtils.canNotEmpty(params.get("moduleCommit"), TxErrorCode.PARAMETER_ERROR.getMsg());
-            ObjectUtils.canNotEmpty(params.get("moduleRollback"), TxErrorCode.PARAMETER_ERROR.getMsg());
             ObjectUtils.canNotEmpty(params.get("list"), TxErrorCode.PARAMETER_ERROR.getMsg());
 
             JSONUtils.getInstance().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            ModuleTxRegisterDTO moduleTxRegisterDto = JSONUtils.map2pojo(params, ModuleTxRegisterDTO.class);
-            //ModuleTxRegisterDTO moduleTxRegisterDto = JSONUtils.json2pojo(JSONUtils.obj2json(params), ModuleTxRegisterDTO.class);
+            ModuleTxRegisterDTO moduleTxRegisterDto = JSONUtils.map2pojo(params,ModuleTxRegisterDTO.class);
 
             chain = chainManager.getChain(moduleTxRegisterDto.getChainId());
             if (null == chain) {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
-            List<TxRegisterDTO> txRegisterList = moduleTxRegisterDto.getList();
+            List<TxRegisterDetail> txRegisterList = moduleTxRegisterDto.getList();
             if (moduleTxRegisterDto == null || txRegisterList == null) {
                 throw new NulsException(TxErrorCode.TX_NOT_EXIST);
             }
@@ -189,7 +181,7 @@ public class TransactionCmd extends BaseCmd {
     //----------------------------------------- test cmd ---------------------------------------------
     /**
      * 性能测试，新交易简要执行
-     * <p>
+     *
      * 测试 测试 测试 ！！
      *
      * @param params
@@ -200,7 +192,6 @@ public class TransactionCmd extends BaseCmd {
 
     @Autowired
     private UnconfirmedTxStorageService unconfirmedTxStorageService;
-
     @CmdAnnotation(cmd = "tx_newTx_test", version = 1.0, description = "receive a new transaction")
     @Parameter(parameterName = "chainId", parameterType = "int")
     @Parameter(parameterName = "tx", parameterType = "String")
@@ -229,7 +220,7 @@ public class TransactionCmd extends BaseCmd {
             }
             unconfirmedTxStorageService.putTx(chain.getChainId(), tx);
             //广播完整交易
-            NetworkCall.broadcastTx(chain.getChainId(), tx);
+            NetworkCall.broadcastTx(chain,tx);
             map.put("value", true);
             return success(map);
         } catch (NulsException e) {
@@ -249,7 +240,6 @@ public class TransactionCmd extends BaseCmd {
 
     /**
      * 新交易基础验证
-     *
      * @param params
      * @return Response
      */
@@ -269,6 +259,9 @@ public class TransactionCmd extends BaseCmd {
             //将txStr转换为Transaction对象
             Transaction tx = TxUtil.getInstanceRpcStr(txStr, Transaction.class);
             TxRegister txRegister = TxManager.getTxRegister(chain, tx.getType());
+            if(null == txRegister){
+                throw new NulsException(TxErrorCode.TX_TYPE_INVALID);
+            }
             //将交易放入待验证本地交易队列中
             txService.baseValidateTx(chain, tx, txRegister);
             Map<String, Boolean> map = new HashMap<>(TxConstant.INIT_CAPACITY_2);
@@ -336,7 +329,6 @@ public class TransactionCmd extends BaseCmd {
 
     /**
      * 共识模块把不能打包的交易还回来，重新加入待打包列表
-     *
      * @param params
      * @return
      */
@@ -353,8 +345,8 @@ public class TransactionCmd extends BaseCmd {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
             List<String> txStrList = (List<String>) params.get("txList");
-            int count = txStrList.size() - 1;
-            for (int i = count; i >= 0; i--) {
+            int count = txStrList.size()-1;
+            for(int i = count; i >= 0; i--) {
                 Transaction tx = TxUtil.getInstanceRpcStr(txStrList.get(i), Transaction.class);
                 packablePool.offerFirst(chain, tx);
             }
@@ -371,6 +363,8 @@ public class TransactionCmd extends BaseCmd {
     }
 
 
+
+
     /**
      * Save the transaction in the new block that was verified to the database
      * 保存新区块的交易
@@ -381,6 +375,7 @@ public class TransactionCmd extends BaseCmd {
     @CmdAnnotation(cmd = TxCmd.TX_SAVE, version = 1.0, description = "transaction save")
     @Parameter(parameterName = "chainId", parameterType = "int")
     @Parameter(parameterName = "txList", parameterType = "List")
+    @Parameter(parameterName = "contractList", parameterType = "List")
     @Parameter(parameterName = "blockHeader", parameterType = "String")
     public Response txSave(Map params) {
         Map<String, Boolean> map = new HashMap<>(TxConstant.INIT_CAPACITY_16);
@@ -389,6 +384,7 @@ public class TransactionCmd extends BaseCmd {
         try {
             ObjectUtils.canNotEmpty(params.get("chainId"), TxErrorCode.PARAMETER_ERROR.getMsg());
             ObjectUtils.canNotEmpty(params.get("txList"), TxErrorCode.PARAMETER_ERROR.getMsg());
+            //ObjectUtils.canNotEmpty(params.get("contractList"), TxErrorCode.PARAMETER_ERROR.getMsg());
             ObjectUtils.canNotEmpty(params.get("blockHeader"), TxErrorCode.PARAMETER_ERROR.getMsg());
 
             chain = chainManager.getChain((int) params.get("chainId"));
@@ -396,7 +392,11 @@ public class TransactionCmd extends BaseCmd {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
             List<String> txStrList = (List<String>) params.get("txList");
-            result = confirmedTxService.saveTxList(chain, txStrList, (String) params.get("blockHeader"));
+            if(null == txStrList){
+                throw new NulsException(TxErrorCode.PARAMETER_ERROR);
+            }
+            List<String> contractList = (List<String>) params.get("contractList");
+            result = confirmedTxService.saveTxList(chain, txStrList, contractList, (String) params.get("blockHeader"));
         } catch (NulsException e) {
             errorLogProcess(chain, e);
             return failed(e.getErrorCode());
@@ -470,10 +470,10 @@ public class TransactionCmd extends BaseCmd {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
             List<String> txHashStrList = (List<String>) params.get("txHashList");
-            List<NulsDigestData> txHashList = new ArrayList<>();
+            List<NulsHash> txHashList = new ArrayList<>();
             //将交易hashHex解码为交易hash字节数组
             for (String hashStr : txHashStrList) {
-                txHashList.add(NulsDigestData.fromDigestHex(hashStr));
+                txHashList.add(NulsHash.fromHex(hashStr));
             }
             //批量回滚已确认交易
             result = confirmedTxService.rollbackTxList(chain, txHashList, (String) params.get("blockHeader"));
@@ -538,16 +538,16 @@ public class TransactionCmd extends BaseCmd {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
             String txHash = (String) params.get("txHash");
-            if (!NulsDigestData.validHash(txHash)) {
+            if (!NulsHash.validHash(txHash)) {
                 throw new NulsException(TxErrorCode.HASH_ERROR);
             }
-            TransactionConfirmedPO tx = txService.getTransaction(chain, NulsDigestData.fromDigestHex(txHash));
+            TransactionConfirmedPO tx = txService.getTransaction(chain, NulsHash.fromHex(txHash));
             Map<String, String> resultMap = new HashMap<>(TxConstant.INIT_CAPACITY_2);
             if (tx == null) {
                 LOG.debug("getTx - from all, fail! tx is null, txHash:{}", txHash);
                 resultMap.put("tx", null);
             } else {
-                LOG.debug("getTx - from all, success txHash : " + tx.getTx().getHash().getDigestHex());
+                LOG.debug("getTx - from all, success txHash : " + tx.getTx().getHash().toHex());
                 resultMap.put("tx", RPCUtil.encode(tx.getTx().serialize()));
             }
             return success(resultMap);
@@ -580,10 +580,10 @@ public class TransactionCmd extends BaseCmd {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
             String txHash = (String) params.get("txHash");
-            if (!NulsDigestData.validHash(txHash)) {
+            if (!NulsHash.validHash(txHash)) {
                 throw new NulsException(TxErrorCode.HASH_ERROR);
             }
-            TransactionConfirmedPO tx = confirmedTxService.getConfirmedTransaction(chain, NulsDigestData.fromDigestHex(txHash));
+            TransactionConfirmedPO tx = confirmedTxService.getConfirmedTransaction(chain, NulsHash.fromHex(txHash));
             Map<String, String> resultMap = new HashMap<>(TxConstant.INIT_CAPACITY_2);
             if (tx == null) {
                 LOG.debug("getConfirmedTransaction fail, tx is null. txHash:{}", txHash);
@@ -605,7 +605,6 @@ public class TransactionCmd extends BaseCmd {
     /**
      * 根据交易hash list 获取区块的完整交易
      * 如果没有查询到,或者查询到的不是区块完整的交易数据 则返回空list
-     *
      * @param params
      * @return Response
      */
@@ -622,7 +621,7 @@ public class TransactionCmd extends BaseCmd {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
             List<String> txHashList = (List<String>) params.get("txHashList");
-            List<String> txList = confirmedTxService.getTxList(chain, txHashList);
+            List<String> txList = confirmedTxService.getTxList(chain,txHashList);
             Map<String, List<String>> resultMap = new HashMap<>(TxConstant.INIT_CAPACITY_2);
             resultMap.put("txList", txList);
             return success(resultMap);
@@ -637,7 +636,6 @@ public class TransactionCmd extends BaseCmd {
 
     /**
      * 根据hash列表,批量获取交易, 先查未确认,再查已确认
-     *
      * @param params allHits 为true时必须全部查到才返回数据, 否则返回空list. false: 查到几个返回几个
      * @return Response
      */
@@ -686,7 +684,6 @@ public class TransactionCmd extends BaseCmd {
     @Parameter(parameterName = "blockHeader", parameterType = "String")
     @Parameter(parameterName = "preStateRoot", parameterType = "String")
     public Response batchVerify(Map params) {
-        long checkStart = System.currentTimeMillis();
         VerifyLedgerResult verifyLedgerResult = null;
         Chain chain = null;
         try {
@@ -698,19 +695,14 @@ public class TransactionCmd extends BaseCmd {
             if (null == chain) {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
-            List<String> txList = (List<String>) params.get("txList");
+            List<String> txList = (List<String>)  params.get("txList");
 
             String blockHeaderStr = (String) params.get("blockHeader");
             BlockHeader blockHeader = TxUtil.getInstanceRpcStr(blockHeaderStr, BlockHeader.class);
 
             String preStateRoot = (String) params.get("preStateRoot");
 
-            boolean rs = txService.batchVerify(chain, txList, blockHeader, blockHeaderStr, preStateRoot);
-            if(blockHeader.getTxCount()>4000){
-                Log.debug("[{}]total use:{}",blockHeader.getHeight(), System.currentTimeMillis() - checkStart);
-            }
-            Map<String, Object> resultMap = new HashMap<>(TxConstant.INIT_CAPACITY_2);
-            resultMap.put("value", rs);
+            Map<String, Object> resultMap = txService.batchVerify(chain, txList, blockHeader, blockHeaderStr, preStateRoot);
             return success(resultMap);
         } catch (NulsException e) {
             errorLogProcess(chain, e);
@@ -745,7 +737,7 @@ public class TransactionCmd extends BaseCmd {
                 throw new NulsException(TxErrorCode.PARAMETER_ERROR);
             }
             chain.getPackaging().set(packaging);
-            chain.getLoggerMap().get(TxConstant.LOG_TX).debug("Task-Packaging 节点是否是打包节点,状态变更为: {}", chain.getPackaging().get());
+            chain.getLogger().debug("Task-Packaging 节点是否是打包节点,状态变更为: {}", chain.getPackaging().get());
             return success();
         } catch (NulsException e) {
             errorLogProcess(chain, e);
@@ -759,7 +751,6 @@ public class TransactionCmd extends BaseCmd {
 
     /**
      * 最新区块高度
-     *
      * @param params
      * @return
      */
@@ -776,7 +767,7 @@ public class TransactionCmd extends BaseCmd {
             }
             Long height =  Long.parseLong(params.get("height").toString());
             chain.setBestBlockHeight(height);
-            chain.getLoggerMap().get(TxConstant.LOG_TX).debug("最新已确认区块高度更新为: [{}]", height);
+            chain.getLogger().debug("最新已确认区块高度更新为: [{}]", height);
             Map<String, Object> resultMap = new HashMap<>(TxConstant.INIT_CAPACITY_2);
             resultMap.put("value", true);
             return success(resultMap);
@@ -794,7 +785,7 @@ public class TransactionCmd extends BaseCmd {
         if (chain == null) {
             LOG.error(e);
         } else {
-            chain.getLoggerMap().get(TxConstant.LOG_TX).error(e);
+            chain.getLogger().error(e);
         }
     }
 

@@ -7,3 +7,6 @@ JOPT_XMX=256
 
 [Core]
 Managed=1
+
+[account]
+moduleDynamicDependent=protocol-update,smart-contract

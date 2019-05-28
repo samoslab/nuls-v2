@@ -1,15 +1,17 @@
 package io.nuls.core.rpc.util;
 
+import io.nuls.core.log.Log;
+import io.nuls.core.rpc.info.Constants;
 import io.nuls.core.rpc.model.ModuleE;
 import io.nuls.core.rpc.model.message.Response;
 import io.nuls.core.rpc.netty.channel.manager.ConnectManager;
 import io.nuls.core.rpc.netty.processor.ResponseMessageProcessor;
-import io.nuls.core.rpc.info.Constants;
-import io.nuls.core.rpc.protocol.*;
-import io.nuls.core.log.Log;
+import io.nuls.core.rpc.protocol.Protocol;
+import io.nuls.core.rpc.protocol.ProtocolGroupManager;
+import io.nuls.core.rpc.protocol.TxDefine;
+import io.nuls.core.rpc.protocol.TxRegisterDetail;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RegisterHelper {
 
@@ -23,24 +25,17 @@ public class RegisterHelper {
             List<TxDefine> allowTxs = protocol.getAllowTx();
             for (TxDefine config : allowTxs) {
                 TxRegisterDetail detail = new TxRegisterDetail();
-                detail.setValidator(config.getValidate());
-                detail.setCommit(config.getCommit());
-                detail.setRollback(config.getRollback());
                 detail.setSystemTx(config.isSystemTx());
                 detail.setTxType(config.getType());
                 detail.setUnlockTx(config.isUnlockTx());
                 detail.setVerifySignature(config.isVerifySignature());
                 txRegisterDetailList.add(detail);
             }
-
             //向交易管理模块注册交易
             Map<String, Object> params = new HashMap<>();
             params.put(Constants.VERSION_KEY_STR, "1.0");
-            params.put("chainId", chainId);
+            params.put(Constants.CHAIN_ID, chainId);
             params.put("moduleCode", moduleCode);
-            params.put("moduleValidator", protocol.getModuleValidator());
-            params.put("moduleCommit", protocol.getModuleCommit());
-            params.put("moduleRollback", protocol.getModuleRollback());
             params.put("list", txRegisterDetailList);
             Response cmdResp = ResponseMessageProcessor.requestAndResponse(ModuleE.TX.abbr, "tx_register", params);
             if (!cmdResp.isSuccess()) {
@@ -69,23 +64,13 @@ public class RegisterHelper {
     public static void registerMsg(Protocol protocol, String role) {
         try {
             Map<String, Object> map = new HashMap<>(2);
-            List<Map<String, String>> cmds = new ArrayList<>();
+            List<String> cmds = new ArrayList<>();
             map.put("role", role);
-            List<String> collect = protocol.getAllowMsg().stream().map(MessageDefine::getProtocolCmd).collect(Collectors.toList());
-            for (String s : collect) {
-                String[] split = s.split(",");
-                for (String s1 : split) {
-                    Map<String, String> cmd = new HashMap<>(2);
-                    cmd.put("protocolCmd", s1);
-                    cmd.put("handler", s1);
-                    cmds.add(cmd);
-                }
-            }
+            protocol.getAllowMsg().forEach(e -> cmds.addAll(Arrays.asList(e.getHandlers().split(","))));
             map.put("protocolCmds", cmds);
             ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_protocolRegister", map);
         } catch (Exception e) {
-            e.printStackTrace();
-            Log.error("registerMsg fail");
+            Log.error("registerMsg fail", e);
         }
     }
 
@@ -110,7 +95,7 @@ public class RegisterHelper {
             Collection<Protocol> protocols = ProtocolGroupManager.getProtocols(chainId);
             Map<String, Object> params = new HashMap<>();
             params.put(Constants.VERSION_KEY_STR, "1.0");
-            params.put("chainId", chainId);
+            params.put(Constants.CHAIN_ID, chainId);
             List<Protocol> list = new ArrayList<>(protocols);
             params.put("list", list);
             params.put("moduleCode", ConnectManager.LOCAL.getAbbreviation());

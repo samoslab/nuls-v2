@@ -4,7 +4,7 @@ import io.nuls.base.api.provider.Result;
 import io.nuls.base.api.provider.ServiceManager;
 import io.nuls.base.api.provider.account.facade.CreateAccountReq;
 import io.nuls.base.api.provider.transaction.TransferService;
-import io.nuls.base.data.NulsDigestData;
+import io.nuls.base.data.NulsHash;
 import io.nuls.test.cases.Constants;
 import io.nuls.test.cases.TestFailException;
 import io.nuls.test.cases.account.BaseAccountCase;
@@ -24,7 +24,7 @@ import java.util.List;
  * @Description: 功能描述
  */
 @Component
-public class BatchCreateAccountCase extends BaseAccountCase<Integer, BatchParam> {
+public class BatchCreateAccountCase extends BaseAccountCase<Long, BatchParam> {
 
     public static final BigInteger TRANSFER_AMOUNT = BigInteger.valueOf(100000000L);
 
@@ -46,15 +46,16 @@ public class BatchCreateAccountCase extends BaseAccountCase<Integer, BatchParam>
     }
 
     @Override
-    public Integer doTest(BatchParam param, int depth) throws TestFailException {
+    public Long doTest(BatchParam param, int depth) throws TestFailException {
         formList.clear();
         toList.clear();
         String formAddress = importAccountByPriKeyCase.check(param.getFormAddressPriKey(), depth);
         int i = 0;
         int successTotal=0;
         Long start = System.currentTimeMillis();
-        NulsDigestData perHash = null;
-        while (i < param.count) {
+        NulsHash perHash = null;
+        Long total = param.count > 5000L ? 5000L : param.count;
+        while (i < total) {
             i++;
             Result<String> account = accountService.createAccount(new CreateAccountReq(2, Constants.PASSWORD));
 //            TransferReq.TransferReqBuilder builder =
@@ -63,7 +64,7 @@ public class BatchCreateAccountCase extends BaseAccountCase<Integer, BatchParam>
 //            builder.addTo(account.getList().get(0), TRANSFER_AMOUNT);
 //            builder.setRemark(REMARK);
 //            Result<String> result = transferService.transfer(builder.build());
-            Result<NulsDigestData> result = fastTransfer.transfer(formAddress,account.getList().get(0),TRANSFER_AMOUNT,param.formAddressPriKey,perHash);
+            Result<NulsHash> result = fastTransfer.transfer(formAddress,account.getList().get(0),TRANSFER_AMOUNT.multiply(BigInteger.valueOf(1000L)),param.formAddressPriKey,perHash);
             try {
                 checkResultStatus(result);
                 perHash = result.getData();
@@ -72,11 +73,21 @@ public class BatchCreateAccountCase extends BaseAccountCase<Integer, BatchParam>
                 Log.error("创建交易失败:{}",e.getMessage());
                 continue;
             }
+            result = fastTransfer.transfer(formAddress,account.getList().get(1),TRANSFER_AMOUNT.multiply(BigInteger.valueOf(1000L)),param.formAddressPriKey,perHash);
+            try {
+                checkResultStatus(result);
+                perHash = result.getData();
+                successTotal++;
+            } catch (TestFailException e) {
+                Log.error("创建交易失败:{}",e.getMessage());
+                continue;
+            }
+
             formList.add(account.getList().get(0));
             toList.add(account.getList().get(1));
         }
-        Log.info("创建{}笔交易,成功{}笔，消耗时间:{}", param.count,successTotal, System.currentTimeMillis() - start);
-        return toList.size();
+        Log.info("创建{}笔交易,成功{}笔，消耗时间:{}", total,successTotal, System.currentTimeMillis() - start);
+        return param.count;
     }
 
     public List<String> getFormList() {

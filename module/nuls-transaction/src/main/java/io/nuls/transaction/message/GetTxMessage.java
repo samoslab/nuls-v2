@@ -2,10 +2,9 @@ package io.nuls.transaction.message;
 
 import io.nuls.base.basic.NulsByteBuffer;
 import io.nuls.base.basic.NulsOutputStreamBuffer;
-import io.nuls.base.data.NulsDigestData;
+import io.nuls.base.data.BaseBusinessMessage;
+import io.nuls.base.data.NulsHash;
 import io.nuls.core.exception.NulsException;
-import io.nuls.core.parse.SerializeUtils;
-import io.nuls.transaction.message.base.BaseMessage;
 
 import java.io.IOException;
 
@@ -15,30 +14,30 @@ import java.io.IOException;
  * @author: qinyifeng
  * @date: 2018/12/26
  */
-public class GetTxMessage extends BaseMessage {
+public class GetTxMessage extends BaseBusinessMessage {
     /**
      * 交易hash
      */
-    private NulsDigestData requestHash;
+    private NulsHash requestHash;
 
-    public NulsDigestData getRequestHash() {
+    public NulsHash getRequestHash() {
         return requestHash;
     }
 
-    public void setRequestHash(NulsDigestData requestHash) {
+    public void setRequestHash(NulsHash requestHash) {
         this.requestHash = requestHash;
     }
 
     @Override
     public int size() {
         int size = 0;
-        size += SerializeUtils.sizeOfNulsData(requestHash);
+        size += NulsHash.HASH_LENGTH;
         return size;
     }
 
     @Override
     public void serializeToStream(NulsOutputStreamBuffer stream) throws IOException {
-        stream.writeNulsData(requestHash);
+        stream.write(requestHash.getBytes());
     }
 
     @Override

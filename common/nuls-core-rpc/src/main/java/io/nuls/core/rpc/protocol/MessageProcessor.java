@@ -1,33 +1,20 @@
 package io.nuls.core.rpc.protocol;
 
-public class MessageProcessor {
-    private String handler;
-    private String method;
+public interface MessageProcessor {
 
-    public MessageProcessor() {
-    }
+    /**
+     * 获取要处理的消息对应的cmd
+     *
+     * @return
+     */
+    String getCmd();
 
-    public String getHandler() {
-        return handler;
-    }
+    /**
+     * 消息处理方法
+     *
+     * @param chainId
+     * @param message
+     */
+    void process(int chainId, String nodeId, String message);
 
-    public void setHandler(String handler) {
-        this.handler = handler;
-    }
-
-    public String getMethod() {
-        return method;
-    }
-
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    @Override
-    public String toString() {
-        return "MessageProcessor{" +
-                "handler='" + handler + '\'' +
-                ", method='" + method + '\'' +
-                '}';
-    }
 }

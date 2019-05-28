@@ -1,6 +1,7 @@
 package io.nuls.test.cases.transcation.batch;
 
 import io.nuls.test.Config;
+import io.nuls.test.cases.SleepAdapter;
 import io.nuls.test.cases.TestCase;
 import io.nuls.test.cases.TestCaseChain;
 import io.nuls.test.cases.TestCaseIntf;
@@ -37,8 +38,8 @@ public class BatchTestCase extends TestCaseChain {
     @Override
     public Object initParam() {
 //        BatchParam param = new BatchParam();
-//        param.count = 1000;
+//        param.count = 10L;
 //        param.formAddressPriKey = config.getTestSeedAccount();
-        return 10000;
+        return config.getBatchTxTotal();
     }
 }

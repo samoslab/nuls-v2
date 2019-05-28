@@ -1,7 +1,7 @@
 package io.nuls.transaction.model.bo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.nuls.base.data.NulsDigestData;
+import io.nuls.base.data.NulsHash;
 import io.nuls.base.data.Transaction;
 import io.nuls.core.log.logback.NulsLogger;
 import io.nuls.core.model.ByteArrayWrapper;
@@ -41,7 +41,8 @@ public class Chain {
     /**
      * 日志
      */
-    private Map<String, NulsLogger> loggerMap;
+    private NulsLogger logger;
+//    private Map<String, NulsLogger> loggerMap;//废弃
 
     /**
      * 交易注册信息
@@ -92,7 +93,7 @@ public class Chain {
     /**
      * 打包时处理孤儿交易的map
      */
-    private Map<NulsDigestData, Integer> txPackageOrphanMap;
+    private Map<NulsHash, Integer> txPackageOrphanMap;
 
     private final Lock packageLock = new ReentrantLock();
 
@@ -116,14 +117,18 @@ public class Chain {
         this.txRegisterMap = new ConcurrentHashMap<>(TxConstant.INIT_CAPACITY_32);
         this.packableHashQueue = new LinkedBlockingDeque<>();
         this.packableTxMap = new ConcurrentHashMap<>();
-        this.loggerMap = new HashMap<>();
         this.contractTxFail = false;
         this.txPackageOrphanMap = new HashMap<>();
         this.orphanList = new LinkedList<>();
         this.txNetProcessList = new ArrayList<>(TxConstant.NET_TX_PROCESS_NUMBER_ONCE);
         this.orphanMap = new ConcurrentHashMap<>();
         this.protocolUpgrade = new AtomicBoolean(false);
+//        this.loggerMap = new HashMap<>();
     }
+
+//    public Map<String, NulsLogger> getLoggerMap() {
+//        return loggerMap;
+//    }
 
     public int getChainId(){
         return config.getChainId();
@@ -145,12 +150,12 @@ public class Chain {
         this.scheduledThreadPoolExecutor = scheduledThreadPoolExecutor;
     }
 
-    public Map<String, NulsLogger> getLoggerMap() {
-        return loggerMap;
+    public NulsLogger getLogger() {
+        return logger;
     }
 
-    public void setLoggerMap(Map<String, NulsLogger> loggerMap) {
-        this.loggerMap = loggerMap;
+    public void setLogger(NulsLogger logger) {
+        this.logger = logger;
     }
 
     public Map<Integer, TxRegister> getTxRegisterMap() {
@@ -198,7 +203,7 @@ public class Chain {
         this.contractTxFail = contractTxFail;
     }
 
-    public Map<NulsDigestData, Integer> getTxPackageOrphanMap() {
+    public Map<NulsHash, Integer> getTxPackageOrphanMap() {
         return txPackageOrphanMap;
     }
 
@@ -206,7 +211,7 @@ public class Chain {
         return packageLock;
     }
 
-    public void setTxPackageOrphanMap(Map<NulsDigestData, Integer> txPackageOrphanMap) {
+    public void setTxPackageOrphanMap(Map<NulsHash, Integer> txPackageOrphanMap) {
         this.txPackageOrphanMap = txPackageOrphanMap;
     }
 

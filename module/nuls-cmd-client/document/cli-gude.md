@@ -576,7 +576,7 @@ Enter your password:**********
     "from" : [ {
       "address" : "OTABmAU91zVafgSLoRrxnHo7k3r/Azg=",
       "assetsChainId" : 12345,
-      "assetsId" : 1,
+      "assetId" : 1,
       "amount" : 100100000,
       "nonce" : "79acNPim+aw=",
       "locked" : 0
@@ -584,7 +584,7 @@ Enter your password:**********
     "to" : [ {
       "address" : "OTABL/80LO1f8vxvfNXc5l9eeIDTGKM=",
       "assetsChainId" : 12345,
-      "assetsId" : 1,
+      "assetId" : 1,
       "amount" : 100000000,
       "lockTime" : 0
     } ]
@@ -618,7 +618,7 @@ nuls>>> gettx 00200a2bc0207a55caa36bfe1f3bfc55a4eef5ec5ea05e90727ede441ce66669f8
     "from" : [ {
       "address" : "OTABmAU91zVafgSLoRrxnHo7k3r/Azg=",
       "assetsChainId" : 12345,
-      "assetsId" : 1,
+      "assetId" : 1,
       "amount" : 100100000,
       "nonce" : "79acNPim+aw=",
       "locked" : 0
@@ -626,7 +626,7 @@ nuls>>> gettx 00200a2bc0207a55caa36bfe1f3bfc55a4eef5ec5ea05e90727ede441ce66669f8
     "to" : [ {
       "address" : "OTABL/80LO1f8vxvfNXc5l9eeIDTGKM=",
       "assetsChainId" : 12345,
-      "assetsId" : 1,
+      "assetId" : 1,
       "amount" : 100000000,
       "lockTime" : 0
     } ]
@@ -1334,7 +1334,7 @@ getcontracttx 00203a48dcfc26426152805be49830c72005b4648d0182bbf6c2e8980380364eb5
   "inputs" : [ {
     "address" : "tNULSeBaMnrs6JKrCy6TQdzYJZkMZJDng7QAsD",
     "assetsChainId" : 2,
-    "assetsId" : 1,
+    "assetId" : 1,
     "amount" : "5700000",
     "nonce" : "ffffffff",
     "locked" : 0,
@@ -1690,12 +1690,11 @@ nuls>>> crosschaininfo 11
 }
 ```
 ### 创建跨链交易
-- **命令：createcrosstx &lt;chainId> &lt;formAddress> &lt;toAddress> &lt;assetChainId> &lt;assetId> &lt;amount> [remark]**
+- **命令：createcrosstx &lt;formAddress> &lt;toAddress> &lt;assetChainId> &lt;assetId> &lt;amount> [remark]**
 
 
 | 参数           | 说明         |
 | -------------- | ------------ |
-|&lt;chainId>|运行交易的链id|
 |&lt;formAddress>|转出地址|
 |&lt;toAddress>|转入地址|
 |&lt;assetChainId>|转账资产的chainId|
@@ -1709,17 +1708,16 @@ nuls>>> crosschaininfo 11
 示例
 
 ```
-nuls>>> createcrosstx 2 tNULSeBaMnrs6JKrCy6TQdzYJZkMZJDng7QAsD M9busmFhQeu1Efn6rDyeQkFjHxv2dSzkuH8 2 1 1
+nuls>>> createcrosstx tNULSeBaMnrs6JKrCy6TQdzYJZkMZJDng7QAsD M9busmFhQeu1Efn6rDyeQkFjHxv2dSzkuH8 2 1 1
 Please enter the password.
 Enter your password:**********
 529bb34c0f4760fa55dd98b92d3e913ed2306b7ac1f93c4491007e266bb04ef5
 ```
 ### 查询跨链交易确认状态
-- **命令：getcrosstxstate  &lt;chainId> &lt;txHash>**
+- **命令：getcrosstxstate  &lt;txHash>**
 
 | 参数           | 说明         |
 | -------------- | ------------ |
-|&lt;chainId>|当前运行的chainId|
 |&lt;txHash>|交易hash|
 
 返回值
@@ -1730,7 +1728,7 @@ Confirmed | Unconfirmed
 示例
 
 ```
-nuls>>> getcrosstxstate 2 529bb34c0f4760fa55dd98b92d3e913ed2306b7ac1f93c4491007e266bb04ef5
+nuls>>> getcrosstxstate 529bb34c0f4760fa55dd98b92d3e913ed2306b7ac1f93c4491007e266bb04ef5
 Unconfirmed
 ```
 

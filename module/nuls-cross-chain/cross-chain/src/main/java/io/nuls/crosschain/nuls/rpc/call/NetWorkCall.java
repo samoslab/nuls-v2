@@ -36,13 +36,7 @@ public class NetWorkCall {
             List<Map<String, String>> cmds = new ArrayList<>();
             map.put("role", ModuleE.CC.abbr);
             List<String> list = List.of(GET_CTX_MESSAGE,GET_OTHER_CTX_MESSAGE,NEW_CTX_MESSAGE,NEW_OTHER_CTX_MESSAGE,VERIFY_CTX_MESSAGE,CTX_VERIFY_RESULT_MESSAGE,GET_CTX_STATE_MESSAGE,CTX_STATE_MESSAGE,BROAD_CTX_HASH_MESSAGE,BROAD_CTX_SIGN_MESSAGE,GET_CIRCULLAT_MESSAGE,REGISTERED_CHAIN_MESSAGE,NulsCrossChainConstant.GET_REGISTERED_CHAIN_MESSAGE);
-            for (String s : list) {
-                Map<String, String> cmd = new HashMap<>(2);
-                cmd.put("protocolCmd", s);
-                cmd.put("handler", s);
-                cmds.add(cmd);
-            }
-            map.put("protocolCmds", cmds);
+            map.put("protocolCmds", list);
             boolean success = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_protocolRegister", map).isSuccess();
             while (!success) {
                 Thread.sleep(1000L);
@@ -78,7 +72,7 @@ public class NetWorkCall {
         try {
             Map<String, Object> params = new HashMap<>(5);
             params.put(Constants.VERSION_KEY_STR, "1.0");
-            params.put("chainId", chainId);
+            params.put(Constants.CHAIN_ID, chainId);
             params.put("excludeNodes", excludeNodes);
             params.put("messageBody", RPCUtil.encode(message.serialize()));
             params.put("command", command);
@@ -102,12 +96,11 @@ public class NetWorkCall {
         try {
             Map<String, Object> params = new HashMap<>(5);
             params.put(Constants.VERSION_KEY_STR, "1.0");
-            params.put("chainId", chainId);
+            params.put(Constants.CHAIN_ID, chainId);
             params.put("nodes", nodeId);
             params.put("messageBody", RPCUtil.encode(message.serialize()));
             params.put("command", command);
-            boolean success = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_sendPeersMsg", params).isSuccess();
-            return success;
+            return ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_sendPeersMsg", params).isSuccess();
         } catch (Exception e) {
             LoggerUtil.commonLog.error(e);
             return false;
@@ -123,7 +116,7 @@ public class NetWorkCall {
      */
     public static int getAvailableNodeAmount(int chainId, boolean isCross) throws NulsException {
         Map<String, Object> callParams = new HashMap<>(4);
-        callParams.put("chainId", chainId);
+        callParams.put(Constants.CHAIN_ID, chainId);
         callParams.put("isCross", isCross);
         try {
             Response callResp = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_getChainConnectAmount", callParams);
@@ -146,7 +139,7 @@ public class NetWorkCall {
      * */
     public static void activeCrossNet(int chainId,int maxOut,int maxIn,String seedIps )throws NulsException{
         Map<String, Object> callParams = new HashMap<>(4);
-        callParams.put("chainId", chainId);
+        callParams.put(Constants.CHAIN_ID, chainId);
         callParams.put("maxOut", maxOut);
         callParams.put("maxIn", maxIn);
         callParams.put("seedIps", seedIps);

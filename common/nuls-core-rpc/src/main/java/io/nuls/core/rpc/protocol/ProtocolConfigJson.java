@@ -6,13 +6,10 @@ public class ProtocolConfigJson {
 
     private short version;
     private short extend;
-    private String moduleValidator;
-    private String moduleCommit;
-    private String moduleRollback;
-    private List<TxDefine> validTransactions;
-    private List<MessageDefine> validMessages;
-    private String invalidTransactions;
-    private String invalidMessages;
+    private List<TxDefine> validTxs;
+    private List<MessageDefine> validMsgs;
+    private String invalidTxs;
+    private String invalidMsgs;
 
     public short getVersion() {
         return version;
@@ -30,62 +27,36 @@ public class ProtocolConfigJson {
         this.extend = extend;
     }
 
-    public List<TxDefine> getValidTransactions() {
-        return validTransactions;
+    public List<TxDefine> getValidTxs() {
+        return validTxs;
     }
 
-    public void setValidTransactions(List<TxDefine> validTransactions) {
-        this.validTransactions = validTransactions;
+    public void setValidTxs(List<TxDefine> validTxs) {
+        this.validTxs = validTxs;
     }
 
-    public List<MessageDefine> getValidMessages() {
-        return validMessages;
+    public List<MessageDefine> getValidMsgs() {
+        return validMsgs;
     }
 
-    public void setValidMessages(List<MessageDefine> validMessages) {
-        this.validMessages = validMessages;
+    public void setValidMsgs(List<MessageDefine> validMsgs) {
+        this.validMsgs = validMsgs;
     }
 
-    public String getInvalidTransactions() {
-        return invalidTransactions;
+    public String getInvalidTxs() {
+        return invalidTxs;
     }
 
-    public void setInvalidTransactions(String invalidTransactions) {
-        this.invalidTransactions = invalidTransactions;
+    public void setInvalidTxs(String invalidTxs) {
+        this.invalidTxs = invalidTxs;
     }
 
-    public String getInvalidMessages() {
-        return invalidMessages;
+    public String getInvalidMsgs() {
+        return invalidMsgs;
     }
 
-    public void setInvalidMessages(String invalidMessages) {
-        this.invalidMessages = invalidMessages;
+    public void setInvalidMsgs(String invalidMsgs) {
+        this.invalidMsgs = invalidMsgs;
     }
 
-    public String getModuleValidator() {
-        return moduleValidator;
-    }
-
-    public void setModuleValidator(String moduleValidator) {
-        this.moduleValidator = moduleValidator;
-    }
-
-    public String getModuleCommit() {
-        return moduleCommit;
-    }
-
-    public void setModuleCommit(String moduleCommit) {
-        this.moduleCommit = moduleCommit;
-    }
-
-    public String getModuleRollback() {
-        return moduleRollback;
-    }
-
-    public void setModuleRollback(String moduleRollback) {
-        this.moduleRollback = moduleRollback;
-    }
-
-    public ProtocolConfigJson() {
-    }
 }

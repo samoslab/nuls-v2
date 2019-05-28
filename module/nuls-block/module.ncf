@@ -7,3 +7,6 @@ JOPT_XMX=512
 
 [Core]
 Managed=1
+
+[block]
+moduleDynamicDependent=protocol-update,cross-chain

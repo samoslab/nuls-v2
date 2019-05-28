@@ -35,6 +35,8 @@ public class GetRegisteredChainTask implements Runnable{
                     if(chainManager.getRegisteredChainMessageList().size() < linkedNode){
                         Thread.sleep(2000);
                         tryCount++;
+                    }else{
+                        break;
                     }
                 }
                 if(chainManager.getRegisteredChainMessageList().size() == 0){
@@ -72,7 +74,7 @@ public class GetRegisteredChainTask implements Runnable{
                 }
                 chainManager.getRegisteredChainMessageList().clear();
             }catch (Exception e){
-                chain.getMessageLog().error(e);
+                chain.getLogger().error(e);
             }
         }
     }

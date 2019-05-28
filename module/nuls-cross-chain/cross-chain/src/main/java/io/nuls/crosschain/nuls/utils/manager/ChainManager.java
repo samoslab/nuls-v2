@@ -1,4 +1,12 @@
 package io.nuls.crosschain.nuls.utils.manager;
+
+import io.nuls.core.core.annotation.Autowired;
+import io.nuls.core.core.annotation.Component;
+import io.nuls.core.log.Log;
+import io.nuls.core.rockdb.service.RocksDBService;
+import io.nuls.core.rpc.protocol.ProtocolLoader;
+import io.nuls.core.thread.ThreadUtils;
+import io.nuls.core.thread.commom.NulsThreadFactory;
 import io.nuls.crosschain.base.message.RegisteredChainMessage;
 import io.nuls.crosschain.base.model.bo.ChainInfo;
 import io.nuls.crosschain.nuls.constant.NulsCrossChainConfig;
@@ -7,15 +15,18 @@ import io.nuls.crosschain.nuls.model.bo.Chain;
 import io.nuls.crosschain.nuls.model.bo.config.ConfigBean;
 import io.nuls.crosschain.nuls.srorage.ConfigService;
 import io.nuls.crosschain.nuls.utils.LoggerUtil;
-import io.nuls.core.rockdb.service.RocksDBService;
-import io.nuls.core.core.annotation.Autowired;
-import io.nuls.core.core.annotation.Component;
-import io.nuls.core.log.Log;
+import io.nuls.crosschain.nuls.utils.thread.handler.CtxMessageHandler;
+import io.nuls.crosschain.nuls.utils.thread.handler.HashMessageHandler;
+import io.nuls.crosschain.nuls.utils.thread.handler.OtherCtxMessageHandler;
+import io.nuls.crosschain.nuls.utils.thread.handler.SignMessageHandler;
+import io.nuls.crosschain.nuls.utils.thread.task.GetRegisteredChainTask;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 链管理类,负责各条链的初始化,运行,启动,参数维护等
@@ -46,11 +57,14 @@ public class ChainManager {
      * */
     private List<RegisteredChainMessage> registeredChainMessageList = new ArrayList<>();
 
+    private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadUtils.createScheduledThreadPool(2,new NulsThreadFactory("getRegisteredChainTask"));
+
+
     /**
      * 初始化
      * Initialization chain
      * */
-    public void initChain(){
+    public void initChain() throws Exception {
         Map<Integer, ConfigBean> configMap = configChain();
         if (configMap == null || configMap.size() == 0) {
             Log.info("链初始化失败！");
@@ -78,6 +92,7 @@ public class ChainManager {
             initTable(chain);
 
             chainMap.put(chainId, chain);
+            ProtocolLoader.load(chainId);
         }
     }
 
@@ -86,7 +101,15 @@ public class ChainManager {
      * Load the chain to cache data and start the chain
      * */
     public void runChain(){
-        //todo 向链管理模块获取已有的跨链信息并缓存
+        for (Chain chain:chainMap.values()) {
+            chain.getThreadPool().execute(new HashMessageHandler(chain));
+            chain.getThreadPool().execute(new CtxMessageHandler(chain));
+            chain.getThreadPool().execute(new SignMessageHandler(chain));
+            chain.getThreadPool().execute(new OtherCtxMessageHandler(chain));
+        }
+        if(!config.isMainNet()){
+            scheduledThreadPoolExecutor.scheduleAtFixedRate(new GetRegisteredChainTask(this), 1L, 15 * 60L, TimeUnit.SECONDS );
+        }
     }
 
 
@@ -185,7 +208,7 @@ public class ChainManager {
             */
             RocksDBService.createTable(NulsCrossChainConstant.DB_NAME_CTX_STATE+ chainId);
         } catch (Exception e) {
-            chain.getBasicLog().error(e.getMessage());
+            LoggerUtil.commonLog.error(e.getMessage());
         }
     }
 
