@@ -1,11 +1,11 @@
 package io.nuls.transaction.message.handler;
 
+import io.nuls.base.RPCUtil;
 import io.nuls.base.data.NulsHash;
+import io.nuls.base.protocol.MessageProcessor;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.exception.NulsException;
-import io.nuls.core.rpc.protocol.MessageProcessor;
-import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.transaction.constant.TxErrorCode;
 import io.nuls.transaction.manager.ChainManager;
 import io.nuls.transaction.message.GetTxMessage;
@@ -43,14 +43,14 @@ public class GetTxMessageHandler implements MessageProcessor {
             if (null == chain) {
                 throw new NulsException(TxErrorCode.CHAIN_NOT_FOUND);
             }
-            NulsHash txHash = message.getRequestHash();
+            NulsHash txHash = message.getTxHash();
 //            chain.getLoggerMap().get(TxConstant.LOG_TX_MESSAGE).debug(
 //                    "recieve [askTx] message from node-{}, chainId:{}, hash:{}", nodeId, chainId, txHash.toHex());
             TransactionConfirmedPO tx = txService.getTransaction(chain, txHash);
             if (tx == null) {
                 throw new NulsException(TxErrorCode.TX_NOT_EXIST);
             }
-            NetworkCall.sendTxToNode(chain, nodeId, tx.getTx());
+            NetworkCall.sendTxToNode(chain, nodeId, tx.getTx(), tx.getOriginalSendNanoTime());
         } catch (Exception e) {
             errorLogProcess(chain, e);
         }

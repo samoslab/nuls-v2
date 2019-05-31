@@ -24,9 +24,6 @@ public class BatchTestCase extends TestCaseChain {
     public Class<? extends TestCaseIntf>[] testChain() {
         return new Class[]{
                 BatchReadyNodeAccountCase.class
-//                BatchCreateAccountCase.class,
-//                SleepAdapter.$15SEC.class,
-//                BatchCreateTransferCase.class
         };
     }
 
@@ -37,9 +34,7 @@ public class BatchTestCase extends TestCaseChain {
 
     @Override
     public Object initParam() {
-//        BatchParam param = new BatchParam();
-//        param.count = 10L;
-//        param.formAddressPriKey = config.getTestSeedAccount();
-        return config.getBatchTxTotal();
+        int batchTxTotal = (int) config.getBatchTxTotal().longValue();
+        return batchTxTotal;
     }
 }

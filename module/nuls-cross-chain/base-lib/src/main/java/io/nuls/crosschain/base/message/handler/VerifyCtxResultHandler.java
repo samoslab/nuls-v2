@@ -1,12 +1,20 @@
 package io.nuls.crosschain.base.message.handler;
 
+import io.nuls.base.RPCUtil;
+import io.nuls.base.protocol.MessageProcessor;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
-import io.nuls.core.rpc.protocol.MessageProcessor;
-import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.crosschain.base.constant.CommandConstant;
 import io.nuls.crosschain.base.message.VerifyCtxResultMessage;
 import io.nuls.crosschain.base.service.ProtocolService;
+
+/**
+ * VerifyCtxResultMessage处理类
+ * VerifyCtxResultMessageProcessing Class
+ *
+ * @author tag
+ * 2019/5/20
+ */
 
 @Component("VerifyCtxResultHandlerV1")
 public class VerifyCtxResultHandler implements MessageProcessor {

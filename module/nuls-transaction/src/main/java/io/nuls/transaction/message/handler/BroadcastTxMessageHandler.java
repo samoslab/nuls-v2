@@ -1,10 +1,10 @@
 package io.nuls.transaction.message.handler;
 
+import io.nuls.base.RPCUtil;
 import io.nuls.base.data.Transaction;
+import io.nuls.base.protocol.MessageProcessor;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
-import io.nuls.core.rpc.protocol.MessageProcessor;
-import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.transaction.manager.ChainManager;
 import io.nuls.transaction.message.BroadcastTxMessage;
 import io.nuls.transaction.model.bo.Chain;
@@ -54,7 +54,7 @@ public class BroadcastTxMessageHandler implements MessageProcessor {
             }
             countRc.incrementAndGet();
             //将交易放入待验证本地交易队列中
-            txService.newBroadcastTx(chainManager.getChain(chainId), new TransactionNetPO(transaction, nodeId));
+            txService.newBroadcastTx(chainManager.getChain(chainId), new TransactionNetPO(transaction, nodeId, message.getOriginalSendNanoTime()));
         } catch (Exception e) {
             errorLogProcess(chain, e);
         }

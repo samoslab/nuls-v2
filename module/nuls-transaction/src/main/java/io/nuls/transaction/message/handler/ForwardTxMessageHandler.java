@@ -1,10 +1,10 @@
 package io.nuls.transaction.message.handler;
 
+import io.nuls.base.RPCUtil;
 import io.nuls.base.data.NulsHash;
+import io.nuls.base.protocol.MessageProcessor;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
-import io.nuls.core.rpc.protocol.MessageProcessor;
-import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.transaction.manager.ChainManager;
 import io.nuls.transaction.message.ForwardTxMessage;
 import io.nuls.transaction.message.GetTxMessage;
@@ -40,16 +40,16 @@ public class ForwardTxMessageHandler implements MessageProcessor {
             if (message == null) {
                 return;
             }
-            NulsHash hash = message.getHash();
+            NulsHash hash = message.getTxHash();
 //            chain.getLoggerMap().get(TxConstant.LOG_TX_MESSAGE).debug(
 //                    "recieve [newHash] message from node-{}, chainId:{}, hash:{}", nodeId, chainId, hash.toHex());
-            //交易缓存中是否已存在该交易hash, 没有则加入进去
-            if (!TxDuplicateRemoval.exist(hash.toHex())) {
+            //只判断是否存在
+            if (TxDuplicateRemoval.exist(hash.toHex())) {
                 return;
             }
             //去该节点查询完整交易
             GetTxMessage getTxMessage = new GetTxMessage();
-            getTxMessage.setRequestHash(hash);
+            getTxMessage.setTxHash(hash);
             NetworkCall.sendToNode(chain, getTxMessage, nodeId, NW_ASK_TX);
         } catch (Exception e) {
             errorLogProcess(chain, e);

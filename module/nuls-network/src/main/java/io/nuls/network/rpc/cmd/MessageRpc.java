@@ -24,13 +24,13 @@
  */
 package io.nuls.network.rpc.cmd;
 
+import io.nuls.base.RPCUtil;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.log.Log;
 import io.nuls.core.rpc.cmd.BaseCmd;
 import io.nuls.core.rpc.model.CmdAnnotation;
 import io.nuls.core.rpc.model.Parameter;
 import io.nuls.core.rpc.model.message.Response;
-import io.nuls.core.rpc.util.RPCUtil;
 import io.nuls.network.constant.CmdConstant;
 import io.nuls.network.constant.NetworkConstant;
 import io.nuls.network.constant.NetworkErrorCode;
@@ -44,6 +44,7 @@ import io.nuls.network.model.NodeGroup;
 import io.nuls.network.model.message.base.MessageHeader;
 import io.nuls.network.model.po.RoleProtocolPo;
 import io.nuls.network.utils.LoggerUtil;
+import io.nuls.network.utils.MessageTestUtil;
 
 import java.util.*;
 
@@ -144,6 +145,7 @@ public class MessageRpc extends BaseCmd {
             if (0 == nodes.size()) {
                 rtMap.put("value", false);
             } else {
+                MessageTestUtil.sendMessage(cmd);
                 messageManager.broadcastToNodes(message, nodes, true);
             }
         } catch (Exception e) {
@@ -253,6 +255,7 @@ public class MessageRpc extends BaseCmd {
                     LoggerUtil.logger(chainId).error("node = {} is not available!", nodeId);
                 }
             }
+            MessageTestUtil.sendMessage(cmd);
             NetworkEventResult networkEventResult = messageManager.broadcastToNodes(message, nodesList, true);
         } catch (Exception e) {
             Log.error(e);

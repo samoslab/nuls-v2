@@ -14,7 +14,6 @@ import io.nuls.crosschain.nuls.constant.NulsCrossChainConfig;
 import io.nuls.crosschain.nuls.constant.NulsCrossChainConstant;
 import io.nuls.crosschain.nuls.model.bo.Chain;
 import io.nuls.crosschain.nuls.model.bo.message.UntreatedMessage;
-import io.nuls.crosschain.nuls.rpc.call.ChainManagerCall;
 import io.nuls.crosschain.nuls.rpc.call.LedgerCall;
 import io.nuls.crosschain.nuls.rpc.call.NetWorkCall;
 import io.nuls.crosschain.nuls.srorage.*;
@@ -205,7 +204,7 @@ public class NulsProtocolServiceImpl implements ProtocolService {
                 UntreatedMessage  untreatedSignMessage = new UntreatedMessage(chainId,nodeId,messageBody,cacheHash);
                 chain.getSignMessageQueue().offer(untreatedSignMessage);
             }
-            chain.getLogger().info("链内节点{}广播过来的跨链交易签名消息接收完成，originalHash:{},Hash:{},签名:{}", nodeId, messageBody.getOriginalHash().toHex(), nativeHex, signHex);
+            chain.getLogger().info("链内节点{}广播过来的跨链交易签名消息接收完成，originalHash:{},Hash:{},签名:{}\n\n", nodeId, messageBody.getOriginalHash().toHex(), nativeHex, signHex);
             return;
         }
         Transaction ctx = newCtxService.get(ctxHash, handleChainId);
@@ -421,6 +420,12 @@ public class NulsProtocolServiceImpl implements ProtocolService {
 
     @Override
     public void receiveRegisteredChainInfo(int chainId, String nodeId, RegisteredChainMessage messageBody) {
+        int handleChainId = chainId;
+        if (config.isMainNet()) {
+            handleChainId = config.getMainChainId();
+        }
+        Chain chain = chainManager.getChainMap().get(handleChainId);
+        chain.getLogger().info("收到主网节点{}发送的已注册链信息,注册跨链的链数量：{}",nodeId,messageBody.getChainInfoList().size());
         chainManager.getRegisteredChainMessageList().add(messageBody);
     }
 }

@@ -20,7 +20,9 @@
 
 package io.nuls.block.message.handler;
 
+import io.nuls.base.RPCUtil;
 import io.nuls.base.data.*;
+import io.nuls.base.protocol.MessageProcessor;
 import io.nuls.block.cache.SmallBlockCacher;
 import io.nuls.block.constant.BlockForwardEnum;
 import io.nuls.block.constant.StatusEnum;
@@ -39,9 +41,7 @@ import io.nuls.block.utils.BlockUtil;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.log.logback.NulsLogger;
-import io.nuls.core.rpc.protocol.MessageProcessor;
-import io.nuls.core.rpc.util.RPCUtil;
-import io.nuls.core.rpc.util.TimeUtils;
+import io.nuls.core.rpc.util.NulsDateUtils;
 import org.apache.commons.collections4.ListUtils;
 
 import java.util.ArrayList;
@@ -78,7 +78,7 @@ public class SmallBlockHandler implements MessageProcessor {
         if (message == null) {
             return;
         }
-        NulsLogger messageLog = context.getMessageLog();
+        NulsLogger messageLog = context.getLogger();
         SmallBlock smallBlock = message.getSmallBlock();
         if (null == smallBlock) {
             messageLog.warn("recieved a null smallBlock!");
@@ -90,7 +90,7 @@ public class SmallBlockHandler implements MessageProcessor {
         //阻止恶意节点提前出块,拒绝接收未来一定时间外的区块
         ChainParameters parameters = context.getParameters();
         int validBlockInterval = parameters.getValidBlockInterval();
-        long currentTime = TimeUtils.getCurrentTimeMillis();
+        long currentTime = NulsDateUtils.getCurrentTimeMillis();
         if (header.getTime() * 1000 > (currentTime + validBlockInterval)) {
             messageLog.error("header.getTime()-" + header.getTime() + ", currentTime-" + currentTime + ", validBlockInterval-" + validBlockInterval);
             return;

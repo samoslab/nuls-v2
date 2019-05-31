@@ -2,13 +2,21 @@ package io.nuls.crosschain.base.tx.v1;
 
 import io.nuls.base.data.BlockHeader;
 import io.nuls.base.data.Transaction;
+import io.nuls.base.protocol.TransactionProcessor;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
-import io.nuls.core.rpc.protocol.TransactionProcessor;
 import io.nuls.crosschain.base.service.CrossChainService;
 
 import java.util.List;
 import java.util.Map;
+
+/**
+ * 跨链交易处理类
+ * Cross chain transaction Processing Class
+ *
+ * @author tag
+ * 2019/5/20
+ */
 
 @Component("CrossChainProcessorV1")
 public class CrossChainProcessor implements TransactionProcessor {

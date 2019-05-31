@@ -1,5 +1,7 @@
 package io.nuls.crosschain.nuls;
 
+import io.nuls.base.protocol.ProtocolGroupManager;
+import io.nuls.base.protocol.RegisterHelper;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.log.Log;
@@ -9,10 +11,9 @@ import io.nuls.core.rpc.model.ModuleE;
 import io.nuls.core.rpc.modulebootstrap.Module;
 import io.nuls.core.rpc.modulebootstrap.NulsRpcModuleBootstrap;
 import io.nuls.core.rpc.modulebootstrap.RpcModuleState;
-import io.nuls.core.rpc.protocol.ProtocolGroupManager;
-import io.nuls.core.rpc.util.RegisterHelper;
 import io.nuls.crosschain.base.BaseCrossChainBootStrap;
 import io.nuls.crosschain.nuls.constant.NulsCrossChainConfig;
+import io.nuls.crosschain.nuls.constant.NulsCrossChainConstant;
 import io.nuls.crosschain.nuls.model.bo.Chain;
 import io.nuls.crosschain.nuls.rpc.call.ChainManagerCall;
 import io.nuls.crosschain.nuls.rpc.call.NetWorkCall;
@@ -168,6 +169,13 @@ public class CrossChainBootStrap extends BaseCrossChainBootStrap {
         RocksDBService.init(nulsCrossChainConfig.getDataFolder());
         RocksDBService.createTable(DB_NAME_CONSUME_LANGUAGE);
         RocksDBService.createTable(DB_NAME_CONSUME_CONGIF);
+        /*
+            已注册跨链的链信息操作表
+            Registered Cross-Chain Chain Information Operating Table
+            key：RegisteredChain
+            value:已注册链信息列表
+            */
+        RocksDBService.createTable(NulsCrossChainConstant.DB_NAME_REGISTERED_CHAIN);
     }
 
 }

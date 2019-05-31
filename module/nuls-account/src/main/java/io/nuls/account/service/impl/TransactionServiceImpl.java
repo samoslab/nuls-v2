@@ -43,6 +43,7 @@ import io.nuls.account.util.LoggerUtil;
 import io.nuls.account.util.TxUtil;
 import io.nuls.account.util.manager.ChainManager;
 import io.nuls.account.util.validator.TxValidator;
+import io.nuls.base.RPCUtil;
 import io.nuls.base.basic.AddressTool;
 import io.nuls.base.basic.NulsByteBuffer;
 import io.nuls.base.basic.TransactionFeeCalculator;
@@ -59,8 +60,7 @@ import io.nuls.core.exception.NulsException;
 import io.nuls.core.exception.NulsRuntimeException;
 import io.nuls.core.model.BigIntegerUtils;
 import io.nuls.core.model.StringUtils;
-import io.nuls.core.rpc.util.RPCUtil;
-import io.nuls.core.rpc.util.TimeUtils;
+import io.nuls.core.rpc.util.NulsDateUtils;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -173,7 +173,7 @@ public class TransactionServiceImpl implements TransactionService {
             throws NulsException, IOException {
         //create transaction
         Transaction transaction = new Transaction(TxType.TRANSFER);
-        transaction.setTime(TimeUtils.getCurrentTimeSeconds());
+        transaction.setTime(NulsDateUtils.getCurrentTimeSeconds());
         transaction.setRemark(StringUtils.bytes(remark));
         //build coin data
         //buildMultiSignTransactionCoinData(transaction, chainId,assetsId, multiSigAccount, toAddress, amount);
@@ -225,7 +225,7 @@ public class TransactionServiceImpl implements TransactionService {
             throws NulsException, IOException {
         //create transaction
         AliasTransaction transaction = new AliasTransaction();
-        transaction.setTime(TimeUtils.getCurrentTimeSeconds());
+        transaction.setTime(NulsDateUtils.getCurrentTimeSeconds());
         transaction.setRemark(StringUtils.bytes(remark));
         Alias alias = new Alias(multiSigAccount.getAddress().getAddressBytes(), aliasName);
         transaction.setTxData(alias.serialize());
@@ -320,7 +320,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private Transaction assemblyTransaction(Chain chain, List<CoinDto> fromList, List<CoinDto> toList, String remark) throws NulsException{
         Transaction tx = new Transaction(TxType.TRANSFER);
-        tx.setTime(TimeUtils.getCurrentTimeSeconds());
+        tx.setTime(NulsDateUtils.getCurrentTimeSeconds());
         tx.setRemark(StringUtils.bytes(remark));
         try {
             //组装CoinData中的coinFrom、coinTo数据
@@ -346,7 +346,8 @@ public class TransactionServiceImpl implements TransactionService {
             //交易签名
             SignatureUtil.createTransactionSignture(tx, signEcKeys);
 
-            if(!TransactionCall.newTx(chain, RPCUtil.encode(tx.serialize()))){
+            if(!TransactionCall.newTx(chain, tx)){
+
                 throw new NulsRuntimeException(AccountErrorCode.FAILED);
             }
         } catch (NulsException e) {
@@ -425,10 +426,6 @@ public class TransactionServiceImpl implements TransactionService {
             //检查该链是否有该资产
             int assetChainId = coinDto.getAssetsChainId();
             int assetId = coinDto.getAssetsId();
-            if (!this.assetExist(assetChainId, assetId)) {
-                chain.getLogger().error("assemblyCoinFrom asset not exist");
-                throw new NulsException(AccountErrorCode.ASSET_NOT_EXIST);
-            }
             //检查对应资产余额是否足够
             BigInteger amount = coinDto.getAmount();
             if (BigIntegerUtils.isLessThan(amount, BigInteger.ZERO)) {
@@ -472,10 +469,6 @@ public class TransactionServiceImpl implements TransactionService {
             //检查该链是否有该资产
             int assetsChainId = coinDto.getAssetsChainId();
             int assetId = coinDto.getAssetsId();
-            if (!this.assetExist(assetsChainId, assetId)) {
-                chain.getLogger().error("assemblyCoinTo asset not exist");
-                throw new NulsException(AccountErrorCode.ASSET_NOT_EXIST);
-            }
             //检查金额是否小于0
             BigInteger amount = coinDto.getAmount();
             if (BigIntegerUtils.isLessThan(amount, BigInteger.ZERO)) {
@@ -487,6 +480,7 @@ public class TransactionServiceImpl implements TransactionService {
             coinTo.setAssetsChainId(assetsChainId);
             coinTo.setAssetsId(assetId);
             coinTo.setAmount(coinDto.getAmount());
+            coinTo.setLockTime(coinDto.getLockTime());
             coinTos.add(coinTo);
         }
         return coinTos;
@@ -504,12 +498,11 @@ public class TransactionServiceImpl implements TransactionService {
      * @throws NulsException
      */
     private CoinData getCoinData(Chain chain, List<CoinFrom> listFrom, List<CoinTo> listTo, int txSize) throws NulsException {
-        int chainId = chain.getChainId();
         //总来源费用
         BigInteger feeTotalFrom = BigInteger.ZERO;
         for (CoinFrom coinFrom : listFrom) {
             txSize += coinFrom.size();
-            if (this.assetExist(chainId, coinFrom.getAssetsId())) {
+            if (TxUtil.isMainAsset(chain, coinFrom.getAssetsChainId(), coinFrom.getAssetsId())) {
                 feeTotalFrom = feeTotalFrom.add(coinFrom.getAmount());
             }
         }
@@ -517,7 +510,7 @@ public class TransactionServiceImpl implements TransactionService {
         BigInteger feeTotalTo = BigInteger.ZERO;
         for (CoinTo coinTo : listTo) {
             txSize += coinTo.size();
-            if (this.assetExist(chainId, coinTo.getAssetsId())) {
+            if (TxUtil.isMainAsset(chain, coinTo.getAssetsChainId(), coinTo.getAssetsId())) {
                 feeTotalTo = feeTotalTo.add(coinTo.getAmount());
             }
         }
@@ -545,25 +538,6 @@ public class TransactionServiceImpl implements TransactionService {
         coinData.setFrom(listFrom);
         coinData.setTo(listTo);
         return coinData;
-    }
-
-    /**
-     * 校验该链是否有该资产
-     *
-     * @param chainId
-     * @param assetId
-     * @return
-     */
-    @Override
-    public boolean assetExist(int chainId, int assetId) {
-        Chain chain = chainManager.getChainMap().get(chainId);
-        if (chain == null) {
-            throw new NulsRuntimeException(AccountErrorCode.CHAIN_NOT_EXIST);
-        }
-        if (chain.getConfig().getAssetId() == assetId) {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -704,10 +678,10 @@ public class TransactionServiceImpl implements TransactionService {
      * 多签交易处理
      * 如果达到最少签名数则广播交易，否则什么也不做
      **/
-    public boolean txMutilProcessing(Chain chain, MultiSigAccount multiSigAccount, Transaction tx, TransactionSignature transactionSignature) throws IOException {
+    public boolean txMutilProcessing(Chain chain, MultiSigAccount multiSigAccount, Transaction tx, TransactionSignature transactionSignature) throws NulsException {
         //当已签名数等于M则自动广播该交易
         if (multiSigAccount.getM() == transactionSignature.getP2PHKSignatures().size()) {
-            if(!TransactionCall.newTx(chain, RPCUtil.encode(tx.serialize()))){
+            if(!TransactionCall.newTx(chain, tx)){
                 chain.getLogger().error("Tx verify failed..");
                 return false;
             }

@@ -60,8 +60,7 @@ import io.nuls.core.exception.NulsRuntimeException;
 import io.nuls.core.model.BigIntegerUtils;
 import io.nuls.core.model.FormatValidUtils;
 import io.nuls.core.model.StringUtils;
-import io.nuls.core.rpc.util.RPCUtil;
-import io.nuls.core.rpc.util.TimeUtils;
+import io.nuls.core.rpc.util.NulsDateUtils;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -133,7 +132,7 @@ public class AliasServiceImpl implements AliasService, InitializingBean {
         //签名别名交易
         signTransaction(tx, account, password);
 
-        if(!TransactionCall.newTx(chain, RPCUtil.encode(tx.serialize()))){
+        if(!TransactionCall.newTx(chain, tx)){
             throw new  NulsRuntimeException(AccountErrorCode.FAILED);
         }
         return tx;
@@ -316,7 +315,7 @@ public class AliasServiceImpl implements AliasService, InitializingBean {
         Transaction tx = null;
         //Second:build the transaction
         tx = new AliasTransaction();
-        tx.setTime(TimeUtils.getCurrentTimeSeconds());
+        tx.setTime(NulsDateUtils.getCurrentTimeSeconds());
         Alias alias = new Alias();
         alias.setAlias(aliasName);
         alias.setAddress(account.getAddress().getAddressBytes());

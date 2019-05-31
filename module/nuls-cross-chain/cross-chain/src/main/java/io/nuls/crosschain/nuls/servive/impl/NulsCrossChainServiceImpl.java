@@ -1,46 +1,47 @@
 package io.nuls.crosschain.nuls.servive.impl;
 
+import io.nuls.base.RPCUtil;
 import io.nuls.base.basic.AddressTool;
 import io.nuls.base.data.*;
 import io.nuls.base.signture.P2PHKSignature;
 import io.nuls.base.signture.TransactionSignature;
+import io.nuls.core.basic.Result;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
+import io.nuls.core.exception.NulsException;
+import io.nuls.core.log.Log;
+import io.nuls.core.model.StringUtils;
+import io.nuls.core.parse.JSONUtils;
+import io.nuls.core.rpc.util.NulsDateUtils;
 import io.nuls.crosschain.base.constant.CommandConstant;
 import io.nuls.crosschain.base.message.GetCtxStateMessage;
 import io.nuls.crosschain.base.service.CrossChainService;
 import io.nuls.crosschain.nuls.constant.NulsCrossChainConfig;
 import io.nuls.crosschain.nuls.constant.NulsCrossChainConstant;
+import io.nuls.crosschain.nuls.model.bo.Chain;
 import io.nuls.crosschain.nuls.model.dto.input.CoinDTO;
+import io.nuls.crosschain.nuls.model.dto.input.CrossTxTransferDTO;
 import io.nuls.crosschain.nuls.model.po.SendCtxHashPo;
 import io.nuls.crosschain.nuls.rpc.call.AccountCall;
 import io.nuls.crosschain.nuls.rpc.call.ChainManagerCall;
 import io.nuls.crosschain.nuls.rpc.call.NetWorkCall;
 import io.nuls.crosschain.nuls.rpc.call.TransactionCall;
 import io.nuls.crosschain.nuls.srorage.*;
+import io.nuls.crosschain.nuls.utils.MessageUtil;
 import io.nuls.crosschain.nuls.utils.TxUtil;
 import io.nuls.crosschain.nuls.utils.manager.ChainManager;
 import io.nuls.crosschain.nuls.utils.manager.CoinDataManager;
-import io.nuls.crosschain.nuls.model.bo.Chain;
-import io.nuls.crosschain.nuls.model.dto.input.CrossTxTransferDTO;
 import io.nuls.crosschain.nuls.utils.validator.CrossTxValidator;
-import io.nuls.core.rpc.util.RPCUtil;
-import io.nuls.core.rpc.util.TimeUtils;
-import io.nuls.core.basic.Result;
-import io.nuls.core.exception.NulsException;
-import io.nuls.core.log.Log;
-import io.nuls.core.model.StringUtils;
-import io.nuls.core.parse.JSONUtils;
-
-import static io.nuls.crosschain.nuls.constant.NulsCrossChainErrorCode.*;
-import static io.nuls.crosschain.nuls.constant.NulsCrossChainConstant.*;
-import static io.nuls.crosschain.nuls.constant.ParamConstant.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static io.nuls.crosschain.nuls.constant.NulsCrossChainConstant.*;
+import static io.nuls.crosschain.nuls.constant.NulsCrossChainErrorCode.*;
+import static io.nuls.crosschain.nuls.constant.ParamConstant.*;
 
 /**
  * 跨链模块默认接口实现类
@@ -95,10 +96,14 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
         if (chain == null) {
             return Result.getFailed(CHAIN_NOT_EXIST);
         }
+        if(!chainManager.isCrossNetUseAble()){
+            chain.getLogger().info("跨链网络组网异常！");
+            return Result.getFailed(CROSS_CHAIN_NETWORK_UNAVAILABLE);
+        }
         Transaction tx = new Transaction(config.getCrossCtxType());
         try {
             tx.setRemark(StringUtils.bytes(crossTxTransferDTO.getRemark()));
-            tx.setTime(TimeUtils.getCurrentTimeSeconds());
+            tx.setTime(NulsDateUtils.getCurrentTimeSeconds());
             List<CoinFrom> coinFromList = coinDataManager.assemblyCoinFrom(chain, crossTxTransferDTO.getListFrom(), false);
             List<CoinTo> coinToList = coinDataManager.assemblyCoinTo(crossTxTransferDTO.getListTo(), chain);
             coinDataManager.verifyCoin(coinFromList, coinToList, chain);
@@ -130,7 +135,7 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
                 }
             }
             if (!txValidator.coinDataValid(chain, coinData, tx.size())) {
-                chain.getLogger().error("跨链交易CoinData验证失败！");
+                chain.getLogger().error("跨链交易CoinData验证失败！\n\n");
                 return Result.getFailed(COINDATA_VERIFY_FAIL);
             }
             //判断本链是友链还是主网，如果是友链则需要生成对应的主网协议跨链交易，如果为主网则直接将跨链交易发送给交易模块处理
@@ -140,7 +145,7 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
                 mTransactionSignature.parse(mainCtx.getTransactionSignature(), 0);
                 p2PHKSignatures.addAll(mTransactionSignature.getP2PHKSignatures());
                 if (!txValidator.coinDataValid(chain, mainCtx.getCoinDataInstance(), mainCtx.size(), false)) {
-                    chain.getLogger().error("生成的主网协议跨链交易CoinData验证失败！");
+                    chain.getLogger().error("生成的主网协议跨链交易CoinData验证失败！\n\n");
                     return Result.getFailed(COINDATA_VERIFY_FAIL);
                 }
                 //保存mtx
@@ -154,7 +159,7 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
                 newCtxService.save(tx.getHash(), tx, chainId);
             }
             if (!TransactionCall.sendTx(chain, RPCUtil.encode(tx.serialize()))) {
-                chain.getLogger().error("跨链交易发送交易模块失败");
+                chain.getLogger().error("跨链交易发送交易模块失败\n\n");
                 throw new NulsException(INTERFACE_CALL_FAILED);
             }
             Map<String, Object> result = new HashMap<>(2);
@@ -293,12 +298,14 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
                 if (chainId == toChainId) {
                     if (!completedCtxService.delete(realCtxHash, chainId) || !newCtxService.save(realCtxHash, ctx, chainId)) {
                         commitCtx(waitSendMap, finishedMap, chainId);
+                        chain.getLogger().error("跨链交易状态修改失败！\n\n");
                         return false;
                     }
                     finishedMap.put(realCtxHash, ctx);
                 } else {
                     if (!commitedCtxService.delete(realCtxHash, chainId) || !newCtxService.save(realCtxHash, ctx, chainId)) {
                         commitCtx(waitSendMap, finishedMap, chainId);
+                        chain.getLogger().error("跨链交易状态修改失败！\n\n");
                         return false;
                     }
                     waitSendMap.put(realCtxHash, ctx);
@@ -307,6 +314,7 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
             //需要被清理的跨链交易高度
             long sendHeight = blockHeader.getHeight() + chain.getConfig().getSendHeight();
             if (!sendHeightService.delete(sendHeight, chainId)) {
+                chain.getLogger().error("已广播跨链高度清除失败！\n\n");
                 return false;
             }
             //如果为主网通知跨链管理模块发起链与接收链资产变更
@@ -375,11 +383,16 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
             if (config.isMainNet()) {
                 Transaction ctx = completedCtxService.get(requestHash, chainId);
                 if (ctx == null) {
+                    chain.getLogger().info("跨链交易不存在！\n\n");
                     result.put(VALUE, false);
                     return Result.getSuccess(SUCCESS).setData(result);
                 }
                 CoinData coinData = ctx.getCoinDataInstance();
                 linkedChainId = AddressTool.getChainIdByAddress(coinData.getTo().get(0).getAddress());
+            }
+            if(MessageUtil.canSendMessage(chain,linkedChainId)){
+                result.put(VALUE, false);
+                return Result.getSuccess(SUCCESS).setData(result);
             }
             NetWorkCall.broadcast(linkedChainId, message, CommandConstant.GET_CTX_STATE_MESSAGE, true);
             if (!chain.getCtxStateMap().containsKey(requestHash)) {
@@ -394,6 +407,14 @@ public class NulsCrossChainServiceImpl implements CrossChainService {
         } catch (NulsException e) {
             return Result.getFailed(e.getErrorCode());
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Result getRegisteredChainInfoList(Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>(2);
+        result.put(LIST, chainManager.getRegisteredCrossChainList());
+        return Result.getSuccess(SUCCESS).setData(result);
     }
 
     @Override
