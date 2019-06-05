@@ -20,7 +20,7 @@
 
 package io.nuls.block.model;
 
-import io.nuls.base.data.NulsDigestData;
+import io.nuls.base.data.NulsHash;
 import io.nuls.block.utils.LoggerUtil;
 
 /**
@@ -43,7 +43,7 @@ public class Node {
     /**
      * 最新区块hash
      */
-    private NulsDigestData hash;
+    private NulsHash hash;
     /**
      * 下载信用值
      */
@@ -70,11 +70,11 @@ public class Node {
         this.height = height;
     }
 
-    public NulsDigestData getHash() {
+    public NulsHash getHash() {
         return hash;
     }
 
-    public void setHash(NulsDigestData hash) {
+    public void setHash(NulsHash hash) {
         this.hash = hash;
     }
 
@@ -104,11 +104,11 @@ public class Node {
             //下载成功,信用值加20,上限为初始信用值的两倍
             credit = Math.min(200, credit + 20);
         } else {
-            //下载失败,信用值减半,下限为0
-            credit /= 2;
+            //下载失败,信用值降为原值的四分之一,下限为0
+            credit >>= 2;
         }
         if (!success) {
-            LoggerUtil.commonLog.error("download fail! node-" + id + ",oldCredit-" + oldCredit + ",newCredit-" + credit);
+            LoggerUtil.COMMON_LOG.warn("download fail! node-" + id + ",oldCredit-" + oldCredit + ",newCredit-" + credit);
         }
     }
 

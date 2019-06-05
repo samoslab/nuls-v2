@@ -30,8 +30,11 @@ package io.nuls.ledger.constant;
  * @date 2019/03/10
  **/
 public interface CmdConstant {
-    /*CALL cmd 获取网络时间*/
-    String CMD_NW_GET_TIME_CALL = "nw_currentTimeMillis";
+    /*CALL cmd */
+    /**
+     * 根据区块高度获取区块
+     */
+    String CMD_GET_BLOCK_BY_HEIGHT = "getBlockByHeight";
 
     /*RPC CMD*/
     /**
@@ -63,6 +66,11 @@ public interface CmdConstant {
      * 回滚未确认交易
      */
     String CMD_ROLLBACK_UNCONFIRMED_TX = "rollBackUnconfirmTx";
+
+    /**
+     * 回滚未确认交易
+     */
+    String CMD_CLEAR_UNCONFIRMED_TXS = "clearUnconfirmTxs";
 
 
     /**
