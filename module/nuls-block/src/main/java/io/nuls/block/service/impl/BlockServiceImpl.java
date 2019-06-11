@@ -274,8 +274,8 @@ public class BlockServiceImpl implements BlockService {
                 commonLog.debug("verifyBlock fail!chainId-" + chainId + ",height-" + height);
                 return false;
             }
-            //todo 需要等待确认
-            if (download == 1 && null != result.getErrorCode() && "".equals(result.getErrorCode().getCode())) {
+            // 需要等待确认
+            if (download == 1 && null != result.getErrorCode() && BlockErrorCode.WAIT_BLOCK_VERIFY.equals(result.getErrorCode())) {
                 BlockSaverManager.getBlockSaver(chainId).addBlock(block, (List) result.getData());
                 if (broadcast) {
                     broadcastBlock(chainId, block);
