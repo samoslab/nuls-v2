@@ -79,6 +79,21 @@ public abstract class BaseCmd {
     }
 
     /**
+     * 返回有特定内容的成功对象
+     * Returns a success object with specific content
+     *
+     * @param responseData Object, can be any values
+     * @code responseCode Special return data
+     * @return Response
+     */
+    protected Response success(Object responseData, String code) {
+        Response response = MessageUtil.newSuccessResponse("", Response.SUCCESS_MSG);
+        response.setResponseData(responseData);
+        response.setResponseErrorCode(code);
+        return response;
+    }
+
+    /**
      * 返回预定义的失败对象
      * Returns the predefined failed object
      *
@@ -97,7 +112,7 @@ public abstract class BaseCmd {
      * @return Response
      */
     protected Response failed(String errMsg) {
-        return failed(CommonCodeConstanst.FAILED,errMsg);
+        return failed(CommonCodeConstanst.FAILED, errMsg);
     }
 
     /**

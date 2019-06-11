@@ -95,18 +95,18 @@ public class ConfigBean extends BaseNulsData {
 
     /**
      * 出块节点密码
-     * */
+     */
     private String password;
 
     /**
      * 打包区块最大值
-     * */
+     */
     private long blockMaxSize;
 
     /**
      * 打包一个区块获得的共识奖励
      * 每年通胀/每年出块数
-     * */
+     */
     private BigInteger blockReward;
 
 
@@ -134,6 +134,8 @@ public class ConfigBean extends BaseNulsData {
      * Transaction fee unit price
      */
     private int feeUnit;
+
+    private int pbft = 0;
 
     public long getPackingInterval() {
         return packingInterval;
@@ -304,6 +306,14 @@ public class ConfigBean extends BaseNulsData {
         this.feeUnit = feeUnit;
     }
 
+    public int getPbft() {
+        return pbft;
+    }
+
+    public void setPbft(int pbft) {
+        this.pbft = pbft;
+    }
+
     @Override
     protected void serializeToStream(NulsOutputStreamBuffer stream) throws IOException {
         stream.writeUint32(packingInterval);
@@ -327,6 +337,7 @@ public class ConfigBean extends BaseNulsData {
         stream.writeUint16(agentChainId);
         stream.writeUint16(awardAssetId);
         stream.writeUint16(feeUnit);
+        stream.write(pbft);
     }
 
     @Override
@@ -352,6 +363,7 @@ public class ConfigBean extends BaseNulsData {
         this.agentChainId = byteBuffer.readUint16();
         this.awardAssetId = byteBuffer.readUint16();
         this.feeUnit = byteBuffer.readUint16();
+        this.pbft = byteBuffer.readByte();
     }
 
     @Override
@@ -364,6 +376,7 @@ public class ConfigBean extends BaseNulsData {
         size += SerializeUtils.sizeOfString(seedNodes);
         size += SerializeUtils.sizeOfUint16() * 6;
         size += SerializeUtils.sizeOfString(password);
+        size += 1;
         return size;
     }
 }

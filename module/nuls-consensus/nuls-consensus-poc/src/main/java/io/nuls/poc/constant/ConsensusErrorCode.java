@@ -44,4 +44,6 @@ public interface ConsensusErrorCode extends CommonCodeConstanst {
     ErrorCode COIN_DATA_VALID_ERROR = ErrorCode.init("cs_0033");
     ErrorCode DEPOSIT_WAS_CANCELED = ErrorCode.init("cs_0034");
     ErrorCode DEPOSIT_NEVER_CANCELED = ErrorCode.init("cs_0035");
+
+    ErrorCode WAIT_BLOCK_VERIFY = ErrorCode.init("bl_0018");
 }

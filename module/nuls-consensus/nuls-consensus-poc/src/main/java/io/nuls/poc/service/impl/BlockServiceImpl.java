@@ -44,6 +44,7 @@ public class BlockServiceImpl implements BlockService {
 
     @Autowired
     private BlockValidator blockValidator;
+
     /**
      * 缓存最新区块
      */
@@ -116,9 +117,9 @@ public class BlockServiceImpl implements BlockService {
         try {
             List<String> headerList = (List<String>) params.get(ConsensusConstant.HEADER_LIST);
             List<BlockHeader> blockHeaderList = new ArrayList<>();
-            for (String header:headerList) {
+            for (String header : headerList) {
                 BlockHeader blockHeader = new BlockHeader();
-                blockHeader.parse(RPCUtil.decode(header),0);
+                blockHeader.parse(RPCUtil.decode(header), 0);
                 blockHeaderList.add(blockHeader);
             }
             List<BlockHeader> localBlockHeaders = chain.getBlockHeaderList();
@@ -146,12 +147,23 @@ public class BlockServiceImpl implements BlockService {
             return Result.getFailed(ConsensusErrorCode.PARAM_ERROR);
         }
         int chainId = dto.getChainId();
+        Chain chain = chainManager.getChainMap().get(chainId);
+        Result result = this.realValidBlock(dto, chain);
+        if (chain.getConfig().getPbft() == 1) {
+            //添加到投票管理器
+
+            result.setErrorCode(ConsensusErrorCode.WAIT_BLOCK_VERIFY);
+        }
+        return result;
+    }
+
+    private Result realValidBlock(ValidBlockDTO dto, Chain chain) {
         /*
          * 0区块下载中，1接收到最新区块
          * */
         boolean isDownload = (dto.getDownload() == 0);
         String blockHex = dto.getBlock();
-        Chain chain = chainManager.getChainMap().get(chainId);
+
         if (chain == null) {
             return Result.getFailed(ConsensusErrorCode.CHAIN_NOT_EXIST);
         }
@@ -161,7 +173,7 @@ public class BlockServiceImpl implements BlockService {
             Block block = new Block();
             block.parse(new NulsByteBuffer(RPCUtil.decode(blockHex)));
             blockValidator.validate(isDownload, chain, block);
-            Response response = CallMethodUtils.verify(chainId, block.getTxs(), block.getHeader(), chain.getNewestHeader(), chain.getLogger());
+            Response response = CallMethodUtils.verify(dto.getChainId(), block.getTxs(), block.getHeader(), chain.getNewestHeader(), chain.getLogger());
             if (response.isSuccess()) {
                 Map responseData = (Map) response.getResponseData();
                 Map v = (Map) responseData.get("tx_batchVerify");

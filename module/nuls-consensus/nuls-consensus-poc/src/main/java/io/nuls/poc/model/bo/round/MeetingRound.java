@@ -89,6 +89,8 @@ public class MeetingRound {
      * */
     private MeetingMember myMember;
 
+    private long offset;
+
     public MeetingRound getPreRound() {
         return preRound;
     }
@@ -259,5 +261,13 @@ public class MeetingRound {
             return ("round:index:" + this.getIndex() + " ,preIndex:" + this.getPreRound().getIndex() + " , start:" + new Date(this.getStartTime())
                     + ", netTime:(" + new Date(NulsDateUtils.getCurrentTimeMillis()).toString() + ") , totalWeight : " + totalWeight + "  , members:\n" + str);
         }
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(long offset) {
+        this.offset = offset;
     }
 }
