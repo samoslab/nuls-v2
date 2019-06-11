@@ -24,6 +24,7 @@ import io.nuls.base.data.Block;
 import io.nuls.base.data.BlockHeader;
 import io.nuls.base.data.NulsHash;
 import io.nuls.base.data.po.BlockHeaderPo;
+import io.nuls.core.basic.Result;
 
 import java.util.List;
 
@@ -98,7 +99,7 @@ public interface BlockService {
     /**
      * 根据区块高度区间获取区块头
      *
-     * @param chainId 链Id/chain id
+     * @param chainId     链Id/chain id
      * @param startHeight 起始高度
      * @param endHeight   结束高度
      * @return
@@ -145,7 +146,7 @@ public interface BlockService {
     /**
      * 根据区块高度区间获取区块
      *
-     * @param chainId 链Id/chain id
+     * @param chainId     链Id/chain id
      * @param startHeight 起始高度
      * @param endHeight   结束高度
      * @return
@@ -155,7 +156,7 @@ public interface BlockService {
     /**
      * 保存区块,已经考虑失败回滚操作,不抛出异常情况下,不会有垃圾数据
      *
-     * @param chainId 链Id/chain id
+     * @param chainId  链Id/chain id
      * @param block    待保存区块
      * @param needLock 是否需要加锁
      * @return
@@ -165,31 +166,34 @@ public interface BlockService {
     /**
      * 保存区块,已经考虑失败回滚操作,不抛出异常情况下,不会有垃圾数据
      *
-     * @param chainId 链Id/chain id
-     * @param block    待保存区块
-     * @param download 是否最新区块,最新区块-1,非最新区块-0
-     * @param needLock 是否需要加同步锁
+     * @param chainId   链Id/chain id
+     * @param block     待保存区块
+     * @param download  是否最新区块,最新区块-1,非最新区块-0
+     * @param needLock  是否需要加同步锁
      * @param broadcast 是否需要广播该区块
-     * @param forward 是否需要转发该区块
+     * @param forward   是否需要转发该区块
      * @return
      */
     boolean saveBlock(int chainId, Block block, int download, boolean needLock, boolean broadcast, boolean forward);
 
-    /**
-     * 回滚区块,已经考虑失败回滚操作,不抛出异常情况下,不会有垃圾数据
-     *
-     * @param chainId 链Id/chain id
-     * @param blockHeaderPo 待回滚区块头
-     * @param needLock 是否需要加同步锁
-     * @return
-     */
-    boolean rollbackBlock(int chainId, BlockHeaderPo blockHeaderPo, boolean needLock);
 
     /**
      * 回滚区块,已经考虑失败回滚操作,不抛出异常情况下,不会有垃圾数据
      *
-     * @param chainId 链Id/chain id
-     * @param height  待回滚区块高度
+     * @param chainId       链Id/chain id
+     * @param blockHeaderPo 待回滚区块头
+     * @param needLock      是否需要加同步锁
+     * @return
+     */
+    boolean rollbackBlock(int chainId, BlockHeaderPo blockHeaderPo, boolean needLock);
+
+    boolean sureBlock(Block block, int chainId, boolean localInit, List contractList, int download, boolean broadcast, boolean forward);
+
+    /**
+     * 回滚区块,已经考虑失败回滚操作,不抛出异常情况下,不会有垃圾数据
+     *
+     * @param chainId  链Id/chain id
+     * @param height   待回滚区块高度
      * @param needLock 是否需要加同步锁
      * @return
      */
@@ -198,7 +202,7 @@ public interface BlockService {
     /**
      * 转发区块给连接的其他对等节点,允许一个例外（不转发给它）
      *
-     * @param chainId 链Id/chain id
+     * @param chainId     链Id/chain id
      * @param hash        区块
      * @param excludeNode 需要排除的节点,因为从该节点处接收的本区块
      * @return
@@ -225,7 +229,7 @@ public interface BlockService {
      * 根据高度获取区块hash
      *
      * @param chainId 链Id/chain id
-     * @param height 区块高度
+     * @param height  区块高度
      * @return
      */
     NulsHash getBlockHash(int chainId, long height);
