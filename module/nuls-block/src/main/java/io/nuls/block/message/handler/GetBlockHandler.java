@@ -24,6 +24,7 @@ import io.nuls.base.RPCUtil;
 import io.nuls.base.data.Block;
 import io.nuls.base.data.NulsHash;
 import io.nuls.base.protocol.MessageProcessor;
+import io.nuls.block.manager.BlockSaverManager;
 import io.nuls.block.manager.ContextManager;
 import io.nuls.block.message.BlockMessage;
 import io.nuls.block.message.HashMessage;
@@ -72,6 +73,10 @@ public class GetBlockHandler implements MessageProcessor {
         NulsLogger messageLog = ContextManager.getContext(chainId).getLogger();
         NulsHash requestHash = message.getRequestHash();
         messageLog.debug("recieve HashMessage from node-" + nodeId + ", chainId:" + chainId + ", hash:" + requestHash);
-        sendBlock(chainId, service.getBlock(chainId, requestHash), nodeId, requestHash);
+        Block block = service.getBlock(chainId, requestHash);
+        if (null == block) {
+            block = BlockSaverManager.getBlockSaver(chainId).getBlock(requestHash);
+        }
+        sendBlock(chainId, block, nodeId, requestHash);
     }
 }

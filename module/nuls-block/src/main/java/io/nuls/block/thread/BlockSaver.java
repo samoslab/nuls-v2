@@ -73,4 +73,15 @@ public class BlockSaver implements Runnable {
     public void addSure(BlockSure sure) {
         sureQueue.offer(sure);
     }
+
+    public Block getBlock(NulsHash hash) {
+        BlockData blockData = null;
+        for (Map<NulsHash, BlockData> map : blockMap.values()) {
+            blockData = map.get(hash);
+            if (null != blockData) {
+                break;
+            }
+        }
+        return blockData.getBlock();
+    }
 }
