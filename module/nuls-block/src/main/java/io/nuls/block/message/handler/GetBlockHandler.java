@@ -74,9 +74,9 @@ public class GetBlockHandler implements MessageProcessor {
         NulsHash requestHash = message.getRequestHash();
         messageLog.debug("recieve HashMessage from node-" + nodeId + ", chainId:" + chainId + ", hash:" + requestHash);
         Block block = service.getBlock(chainId, requestHash);
-        if (null == block) {
-            block = BlockSaverManager.getBlockSaver(chainId).getBlock(requestHash);
-        }
+//        if (null == block) {
+//            block = BlockSaverManager.getBlockSaver(chainId).getBlock(requestHash);
+//        }
         sendBlock(chainId, block, nodeId, requestHash);
     }
 }
