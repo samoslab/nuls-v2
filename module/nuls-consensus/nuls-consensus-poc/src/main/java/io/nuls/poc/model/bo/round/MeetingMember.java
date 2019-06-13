@@ -24,13 +24,16 @@
  *
  */
 package io.nuls.poc.model.bo.round;
+
 import io.nuls.poc.model.bo.tx.txdata.Agent;
 import io.nuls.poc.model.bo.tx.txdata.Deposit;
 import io.nuls.core.crypto.Sha256Hash;
 import io.nuls.core.model.ByteUtils;
 import io.nuls.core.parse.SerializeUtils;
+
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * 轮次成员信息类
  * Round Membership Information Class
@@ -40,50 +43,53 @@ import java.util.List;
  */
 public class MeetingMember implements Comparable<MeetingMember> {
     /**
-    * 轮次下标
-    * Subscript in order
-    * */
+     * 轮次下标
+     * Subscript in order
+     */
     private long roundIndex;
     /**
-    * 轮次开始打包时间
-    * Round start packing time
-    * */
+     * 轮次开始打包时间
+     * Round start packing time
+     */
     private long roundStartTime;
     /**
-    * 节点在轮次中的下标（第几个出块）
-    * Subscription of Nodes in Rounds (Number of Blocks)
-    * */
+     * 节点在轮次中的下标（第几个出块）
+     * Subscription of Nodes in Rounds (Number of Blocks)
+     */
     private int packingIndexOfRound;
     /**
-    * 共识节点对象
-    * Consensus node object
-    * */
+     * 共识节点对象
+     * Consensus node object
+     */
     private Agent agent;
     /**
-    * 共识节--委托信息列表
-    * Consensus Festival - Delegation Information List
-    * */
+     * 共识节--委托信息列表
+     * Consensus Festival - Delegation Information List
+     */
     private List<Deposit> depositList = new ArrayList<>();
     /**
-    * 排序值
-    * Ranking value
-    * */
+     * 排序值
+     * Ranking value
+     */
     private String sortValue;
     /**
-    * 开始打包时间
-    * Start packing time
-    * */
-    private long packStartTime;
+     * 开始打包时间
+     * Start packing time
+     */
+    private long startTime;
     /**
-    * 打包结束时间
-    * end packing time
-    * */
-    private long packEndTime;
+     * 打包结束时间
+     * end packing time
+     */
+    private long endTime;
+
+    //是否可以进入区块生产车间的钥匙，没有这个钥匙时，不能进行打包，否则会有黄牌
+    private boolean key;
 
     /**
      * 计算节点打包排序值
      * Computing Packing Sort Value of Nodes
-     * */
+     */
     public String getSortValue() {
         if (this.sortValue == null) {
             byte[] hash = ByteUtils.concatenate(agent.getPackingAddress(), SerializeUtils.uint64ToByteArray(roundStartTime));
@@ -100,20 +106,20 @@ public class MeetingMember implements Comparable<MeetingMember> {
         this.packingIndexOfRound = packingIndexOfRound;
     }
 
-    public long getPackStartTime() {
-        return packStartTime;
+    public long getStartTime() {
+        return startTime;
     }
 
-    public void setPackStartTime(long packStartTime) {
-        this.packStartTime = packStartTime;
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
     }
 
-    public long getPackEndTime() {
-        return packEndTime;
+    public long getEndTime() {
+        return endTime;
     }
 
-    public void setPackEndTime(long packEndTime) {
-        this.packEndTime = packEndTime;
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
     }
 
     @Override
@@ -155,5 +161,13 @@ public class MeetingMember implements Comparable<MeetingMember> {
 
     public void setRoundIndex(long roundIndex) {
         this.roundIndex = roundIndex;
+    }
+
+    public boolean hasKey() {
+        return key;
+    }
+
+    public void setKey(boolean key) {
+        this.key = key;
     }
 }

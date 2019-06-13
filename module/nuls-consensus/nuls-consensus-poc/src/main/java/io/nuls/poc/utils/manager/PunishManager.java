@@ -364,7 +364,7 @@ public class PunishManager {
                 redPunishData.setAddress(address);
                 redPunishData.setReasonCode(PunishReasonEnum.TOO_MUCH_YELLOW_PUNISH.getCode());
                 redPunishTransaction.setTxData(redPunishData.serialize());
-                redPunishTransaction.setTime(self.getPackEndTime());
+                redPunishTransaction.setTime(self.getEndTime() + round.getOffset());
                 CoinData coinData = coinDataManager.getStopAgentCoinData(chain, redPunishData.getAddress(), redPunishTransaction.getTime() + chain.getConfig().getRedPublishLockTime());
                 if (coinData != null) {
                     redPunishTransaction.setCoinData(coinData.serialize());
@@ -476,7 +476,7 @@ public class PunishManager {
         YellowPunishData data = new YellowPunishData();
         data.setAddressList(addressList);
         punishTx.setTxData(data.serialize());
-        punishTx.setTime(self.getPackEndTime());
+        punishTx.setTime(self.getEndTime() + round.getOffset());
         punishTx.setHash(NulsHash.calcHash(punishTx.serializeForHash()));
         return punishTx;
     }

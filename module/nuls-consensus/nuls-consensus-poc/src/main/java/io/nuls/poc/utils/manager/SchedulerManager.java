@@ -1,6 +1,8 @@
 package io.nuls.poc.utils.manager;
 
 import io.nuls.poc.model.bo.Chain;
+import io.nuls.poc.pbft.BlockVoter;
+import io.nuls.poc.pbft.manager.BlockVoterManager;
 import io.nuls.poc.utils.thread.ConsensusProcessTask;
 import io.nuls.poc.utils.thread.process.ConsensusProcess;
 import io.nuls.core.core.annotation.Component;
@@ -16,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author tag
  * 2018/11/9
- * */
+ */
 @Component
 public class SchedulerManager {
     /**
@@ -24,16 +26,19 @@ public class SchedulerManager {
      * The task of creating a chain
      *
      * @param chain chain info
-     * */
-    public void createChainScheduler(Chain chain){
+     */
+    public void createChainScheduler(Chain chain) {
         int chainId = chain.getConfig().getChainId();
-        ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadUtils.createScheduledThreadPool(2,new NulsThreadFactory("consensus"+chainId));
+        ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadUtils.createScheduledThreadPool(2, new NulsThreadFactory("consensus" + chainId));
         /*
         创建链相关的任务
         Chain-related tasks
         */
         ConsensusProcess consensusProcess = new ConsensusProcess();
-        scheduledThreadPoolExecutor.scheduleAtFixedRate(new ConsensusProcessTask(chain,consensusProcess),1000L,100L, TimeUnit.MILLISECONDS);
+        scheduledThreadPoolExecutor.scheduleAtFixedRate(new ConsensusProcessTask(chain, consensusProcess), 1000L, 100L, TimeUnit.MILLISECONDS);
         chain.setScheduledThreadPoolExecutor(scheduledThreadPoolExecutor);
+
+        BlockVoter voter = new BlockVoter(chain);
+        BlockVoterManager.putVoter(chainId, voter);
     }
 }

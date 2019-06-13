@@ -12,12 +12,12 @@ public class BlockVoterManager {
 
     private static final Map<Integer, BlockVoter> voterMap = new HashMap<>();
 
+
+    public static void putVoter(int chainId, BlockVoter voter) {
+        voterMap.put(chainId, voter);
+    }
+
     public static BlockVoter getVoter(int chainId) {
-        BlockVoter voter = voterMap.get(chainId);
-        if (null == voter) {
-            voter = new BlockVoter(chainId);
-            voterMap.put(chainId, voter);
-        }
-        return voter;
+        return voterMap.get(chainId);
     }
 }

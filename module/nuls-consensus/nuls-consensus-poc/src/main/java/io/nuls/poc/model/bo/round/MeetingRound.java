@@ -51,42 +51,42 @@ public class MeetingRound {
     /**
      * 总权重
      * Total weight
-     * */
+     */
     private double totalWeight;
     /**
      * 本地打包节点在当前轮次的下标
      * Subscription of Local Packing Node in Current Round
-     * */
+     */
     private long index;
     /**
      * 当前轮次开始打包时间
      * Current Round Start Packing Time
-     * */
+     */
     private long startTime;
     /**
      * 当前轮次打包结束时间
      * End time of front packing
-     * */
+     */
     private long endTime;
     /**
      * 当前轮次打包节点数量
      * Number of Packing Nodes in Current Round
-     * */
+     */
     private int memberCount;
     /**
      * 当前轮次打包成员列表
      * Current rounds packaged membership list
-     * */
+     */
     private List<MeetingMember> memberList;
     /**
      * 上一轮轮次信息
      * Last round of information
-     * */
+     */
     private MeetingRound preRound;
     /**
      * 本地打包成员信息
      * Locally packaged member information
-     * */
+     */
     private MeetingMember myMember;
 
     private long offset;
@@ -121,7 +121,7 @@ public class MeetingRound {
      *
      * @param memberList 打包成员信息列表/Packaged Member Information List
      * @param chain      chain info
-     * */
+     */
     public void init(List<MeetingMember> memberList, Chain chain) {
         assert (startTime > 0L);
         this.memberList = memberList;
@@ -136,17 +136,17 @@ public class MeetingRound {
             member = memberList.get(i);
             member.setRoundStartTime(this.getStartTime());
             member.setPackingIndexOfRound(i + 1);
-            member.setPackStartTime(startTime + i * chain.getConfig().getPackingInterval());
-            member.setPackEndTime(member.getPackStartTime() + chain.getConfig().getPackingInterval());
+            member.setStartTime(startTime + i * chain.getConfig().getPackingInterval());
+            member.setEndTime(member.getStartTime() + chain.getConfig().getPackingInterval());
             /*
             轮次总权重等于所有节点权重之和，节点权重=(保证金+总委托金额)*节点信用值
             Round total weight equals the sum of all node weights, node weight = (margin + total Commission amount)* node credit value
             */
             BigInteger ownTotalWeight = BigInteger.ZERO;
-            if(!member.getAgent().getTotalDeposit().equals(BigInteger.ZERO)){
+            if (!member.getAgent().getTotalDeposit().equals(BigInteger.ZERO)) {
                 ownTotalWeight = member.getAgent().getTotalDeposit().add(member.getAgent().getDeposit());
             }
-            totalWeight += DoubleUtils.mul(member.getAgent().getCreditVal(),new BigDecimal(ownTotalWeight));
+            totalWeight += DoubleUtils.mul(member.getAgent().getCreditVal(), new BigDecimal(ownTotalWeight));
         }
         endTime = startTime + memberCount * chain.getConfig().getPackingInterval();
     }
@@ -161,7 +161,7 @@ public class MeetingRound {
         return this.memberList.get(order - 1);
     }
 
-    public MeetingMember getOnlyMember(byte[] address,Chain chain){
+    public MeetingMember getOnlyMember(byte[] address, Chain chain) {
         for (MeetingMember member : memberList) {
             if (Arrays.equals(address, member.getAgent().getPackingAddress())) {
                 return member;
@@ -170,7 +170,7 @@ public class MeetingRound {
         return null;
     }
 
-    public MeetingMember getMember(byte[] address,Chain chain) {
+    public MeetingMember getMember(byte[] address, Chain chain) {
         for (MeetingMember member : memberList) {
             if (Arrays.equals(address, member.getAgent().getPackingAddress()) && validAccount(chain, AddressTool.getStringAddressByBytes(member.getAgent().getPackingAddress()))) {
                 return member;
@@ -179,23 +179,23 @@ public class MeetingRound {
         return null;
     }
 
-    private boolean validAccount(Chain chain,String address) {
+    private boolean validAccount(Chain chain, String address) {
         try {
             HashMap callResult = CallMethodUtils.accountValid(chain.getConfig().getChainId(), address, chain.getConfig().getPassword());
             String priKey = (String) callResult.get("priKey");
-            if (StringUtils.isNotBlank(priKey)){
+            if (StringUtils.isNotBlank(priKey)) {
                 return true;
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.error(e);
         }
         return false;
     }
 
     /**
-    * 根据节点地址获取节点对应的打包信息
-    * Get the packing information corresponding to the node according to the address of the node
-    */
+     * 根据节点地址获取节点对应的打包信息
+     * Get the packing information corresponding to the node according to the address of the node
+     */
     public MeetingMember getMemberByAgentAddress(byte[] address) {
         for (MeetingMember member : memberList) {
             if (Arrays.equals(address, member.getAgent().getAgentAddress())) {
@@ -226,20 +226,20 @@ public class MeetingRound {
         return myMember;
     }
 
-    public void calcLocalPacker(List<byte[]> localAddressList,Chain chain) {
-        for (byte[] address:localAddressList) {
-            MeetingMember member = getMember(address,chain);
+    public void calcLocalPacker(List<byte[]> localAddressList, Chain chain) {
+        for (byte[] address : localAddressList) {
+            MeetingMember member = getMember(address, chain);
             if (null != member) {
                 myMember = member;
                 break;
             }
         }
-        if(myMember != null && !chain.isPacker()){
-            CallMethodUtils.sendState(chain,true);
+        if (myMember != null && !chain.isPacker()) {
+            CallMethodUtils.sendState(chain, true);
             chain.setPacker(true);
         }
-        if(myMember == null && chain.isPacker()){
-            CallMethodUtils.sendState(chain,false);
+        if (myMember == null && chain.isPacker()) {
+            CallMethodUtils.sendState(chain, false);
             chain.setPacker(false);
         }
     }
@@ -250,7 +250,7 @@ public class MeetingRound {
         for (MeetingMember member : this.getMemberList()) {
             str.append(Address.fromHashs(member.getAgent().getPackingAddress()).getBase58());
             str.append(" ,order:" + member.getPackingIndexOfRound());
-            str.append(",packTime:" + new Date(member.getPackEndTime() * 1000));
+            str.append(",packTime:" + new Date((member.getEndTime() + this.offset) * 1000));
             str.append(",creditVal:" + member.getAgent().getRealCreditVal());
             str.append("\n");
         }

@@ -1,18 +1,17 @@
 package io.nuls.poc.pbft.model;
 
-import io.nuls.base.data.NulsHash;
-
 /**
  * @author Niels
  */
-public class VoteData {
+public class VoteRound {
+
     private long height;
 
     private int round;
 
-    private NulsHash hash;
+    private long start;
 
-    private String address;
+    private long end;
 
     public long getHeight() {
         return height;
@@ -30,19 +29,19 @@ public class VoteData {
         this.round = round;
     }
 
-    public NulsHash getHash() {
-        return hash;
+    public long getStart() {
+        return start;
     }
 
-    public void setHash(NulsHash hash) {
-        this.hash = hash;
+    public void setStart(long start) {
+        this.start = start;
     }
 
-    public String getAddress() {
-        return address;
+    public long getEnd() {
+        return end;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setEnd(long end) {
+        this.end = end;
     }
 }

@@ -164,7 +164,7 @@ public class BlockValidator {
             chain.getLogger().error("block height " + blockHeader.getHeight() + " packager error! hash :" + blockHeaderHash);
             throw new NulsException(ConsensusErrorCode.BLOCK_ROUND_VALIDATE_ERROR);
         }
-        if (member.getPackEndTime() != blockHeader.getTime()) {
+        if (member.getEndTime() + currentRound.getOffset() != blockHeader.getTime()) {
             chain.getLogger().error("block height " + blockHeader.getHeight() + " time error! hash :" + blockHeaderHash);
             throw new NulsException(ConsensusErrorCode.BLOCK_ROUND_VALIDATE_ERROR);
         }

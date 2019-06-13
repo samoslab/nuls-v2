@@ -54,6 +54,7 @@ public class BlockSaver implements Runnable {
 
                 if (blockData.getBlock().getHeader().getHash().equals(sure.getHash())) {
                     blockService.sureBlock(blockData.getBlock(), this.chainId, false, blockData.getContractList(), 1, false, false);
+                    blockMap.remove(sure.getHeight());
                 }
             } catch (Exception e) {
                 LoggerUtil.COMMON_LOG.error(e);

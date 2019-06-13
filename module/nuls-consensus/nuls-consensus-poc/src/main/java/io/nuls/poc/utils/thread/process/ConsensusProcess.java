@@ -109,13 +109,13 @@ public class ConsensusProcess {
         1. Is the node packing?
         2. Is the current time between the start and end of the node packing?
         */
-        if (!hasPacking && member.getPackStartTime() < NulsDateUtils.getCurrentTimeSeconds() && member.getPackEndTime() > NulsDateUtils.getCurrentTimeSeconds()) {
+        if (!hasPacking && this.isMyTurn(round, member)) {
             hasPacking = true;
             try {
                 if (consensusLogger.getLogger().isDebugEnabled()) {
                     consensusLogger.debug("当前网络时间： " + NulsDateUtils.convertDate(new Date(NulsDateUtils.getCurrentTimeMillis())) + " , 我的打包开始时间: " +
-                            NulsDateUtils.convertDate(new Date(member.getPackStartTime() * 1000)) + " , 我的打包结束时间: " +
-                            NulsDateUtils.convertDate(new Date(member.getPackEndTime() * 1000)) + " , 当前轮开始时间: " +
+                            NulsDateUtils.convertDate(new Date((round.getOffset() + member.getStartTime()) * 1000)) + " , 我的打包结束时间: " +
+                            NulsDateUtils.convertDate(new Date((round.getOffset() + member.getEndTime()) * 1000)) + " , 当前轮开始时间: " +
                             NulsDateUtils.convertDate(new Date(round.getStartTime() * 1000)) + " , 当前轮结束开始时间: " +
                             NulsDateUtils.convertDate(new Date(round.getEndTime() * 1000)));
                 }
@@ -123,7 +123,7 @@ public class ConsensusProcess {
             } catch (Exception e) {
                 consensusLogger.error(e);
             }
-            while (member.getPackEndTime() > NulsDateUtils.getCurrentTimeSeconds()) {
+            while ((round.getOffset() + member.getEndTime()) > NulsDateUtils.getCurrentTimeSeconds()) {
                 try {
                     Thread.sleep(500L);
                 } catch (InterruptedException e) {
@@ -132,6 +132,11 @@ public class ConsensusProcess {
             }
             hasPacking = false;
         }
+    }
+
+    private boolean isMyTurn(MeetingRound round, MeetingMember member) {
+        return member.hasKey() && (round.getOffset() + member.getStartTime()) < NulsDateUtils.getCurrentTimeSeconds()
+                && (round.getOffset() + member.getEndTime()) > NulsDateUtils.getCurrentTimeSeconds();
     }
 
     private void packing(Chain chain, MeetingMember self, MeetingRound round) throws Exception {
@@ -154,7 +159,7 @@ public class ConsensusProcess {
             return;
         }
         try {
-            CallMethodUtils.receivePackingBlock(chain.getConfig().getChainId(), RPCUtil.encode(block.serialize()), self.getPackEndTime() - NulsDateUtils.getCurrentTimeSeconds());
+            CallMethodUtils.receivePackingBlock(chain.getConfig().getChainId(), RPCUtil.encode(block.serialize()), round.getOffset() + self.getEndTime() - NulsDateUtils.getCurrentTimeSeconds());
         } catch (Exception e) {
             consensusLogger.error(e);
         }
@@ -167,7 +172,7 @@ public class ConsensusProcess {
      */
     private void waitReceiveNewestBlock(Chain chain, MeetingMember self, MeetingRound round) {
         long timeout = chain.getConfig().getPackingInterval() / 5;
-        long endTime = self.getPackStartTime() + timeout;
+        long endTime = self.getStartTime() + round.getOffset() + timeout;
         boolean hasReceiveNewestBlock;
         if (NulsDateUtils.getCurrentTimeSeconds() >= endTime) {
             return;
@@ -262,7 +267,7 @@ public class ConsensusProcess {
         BlockData bd = new BlockData();
         bd.setHeight(packageHeight);
         bd.setPreHash(bestBlock.getHash());
-        bd.setTime(self.getPackEndTime());
+        bd.setTime(self.getEndTime() + round.getOffset());
         BlockExtendsData extendsData = new BlockExtendsData();
         extendsData.setRoundIndex(round.getIndex());
         extendsData.setConsensusMemberCount(round.getMemberCount());
@@ -331,7 +336,7 @@ public class ConsensusProcess {
             }
         }
         consensusLogger.info("make block height:" + newBlock.getHeader().getHeight() + ",txCount: " + newBlock.getTxs().size() + " , block size: " + newBlock.size() + " , time:" + NulsDateUtils.convertDate(new Date(newBlock.getHeader().getTime() * 1000)) + ",packEndTime:" +
-                NulsDateUtils.convertDate(new Date(self.getPackEndTime() * 1000)) + ",hash:" + newBlock.getHeader().getHash().toHex() + ",preHash:" + newBlock.getHeader().getPreHash().toHex());
+                NulsDateUtils.convertDate(new Date((round.getOffset() + self.getEndTime()) * 1000)) + ",hash:" + newBlock.getHeader().getHash().toHex() + ",preHash:" + newBlock.getHeader().getPreHash().toHex());
         return newBlock;
     }
 }
