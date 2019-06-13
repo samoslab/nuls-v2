@@ -12,7 +12,7 @@ public class VoteData {
 
     private NulsHash hash;
 
-    private String address;
+    private byte[] address;
 
     public long getHeight() {
         return height;
@@ -38,11 +38,11 @@ public class VoteData {
         this.hash = hash;
     }
 
-    public String getAddress() {
+    public byte[] getAddress() {
         return address;
     }
 
-    public void setAddress(String address) {
+    public void setAddress(byte[] address) {
         this.address = address;
     }
 }

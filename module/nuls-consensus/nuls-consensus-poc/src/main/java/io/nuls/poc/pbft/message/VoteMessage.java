@@ -21,6 +21,8 @@ public class VoteMessage extends BaseBusinessMessage {
 
     private int round;
 
+    private byte step = 0;
+
     private NulsHash hash;
 
     private byte[] sign;
@@ -29,6 +31,7 @@ public class VoteMessage extends BaseBusinessMessage {
     protected void serializeToStream(NulsOutputStreamBuffer stream) throws IOException {
         stream.writeInt64(height);
         stream.write(SerializeUtils.int16ToBytes(round));
+        stream.write(step);
         stream.write(hash.getBytes());
         stream.writeBytesWithLength(sign);
     }
@@ -44,6 +47,7 @@ public class VoteMessage extends BaseBusinessMessage {
             } else {
                 buffer.writeInt64(height);
                 buffer.write(SerializeUtils.int16ToBytes(round));
+                buffer.write(step);
                 buffer.write(hash.getBytes());
             }
             return bos.toByteArray();
@@ -62,6 +66,7 @@ public class VoteMessage extends BaseBusinessMessage {
     public void parse(NulsByteBuffer byteBuffer) throws NulsException {
         this.height = byteBuffer.readInt64();
         this.round = byteBuffer.readShort();
+        this.step = byteBuffer.readByte();
         this.hash = byteBuffer.readHash();
         this.sign = byteBuffer.readByLengthByte();
 
@@ -69,9 +74,17 @@ public class VoteMessage extends BaseBusinessMessage {
 
     @Override
     public int size() {
-        int size = 42;
+        int size = 43;
         size += SerializeUtils.sizeOfBytes(sign);
         return size;
+    }
+
+    public byte getStep() {
+        return step;
+    }
+
+    public void setStep(byte step) {
+        this.step = step;
     }
 
     public long getHeight() {

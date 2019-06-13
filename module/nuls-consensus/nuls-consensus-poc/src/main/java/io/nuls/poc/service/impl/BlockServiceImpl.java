@@ -5,6 +5,7 @@ import io.nuls.base.basic.NulsByteBuffer;
 import io.nuls.base.data.Block;
 import io.nuls.base.data.BlockHeader;
 import io.nuls.core.basic.Result;
+import io.nuls.core.constant.ErrorCode;
 import io.nuls.core.core.annotation.Autowired;
 import io.nuls.core.core.annotation.Component;
 import io.nuls.core.exception.NulsException;
@@ -14,6 +15,8 @@ import io.nuls.poc.constant.ConsensusConstant;
 import io.nuls.poc.constant.ConsensusErrorCode;
 import io.nuls.poc.model.bo.Chain;
 import io.nuls.poc.model.dto.input.ValidBlockDTO;
+import io.nuls.poc.pbft.BlockVoter;
+import io.nuls.poc.pbft.manager.BlockVoterManager;
 import io.nuls.poc.rpc.call.CallMethodUtils;
 import io.nuls.poc.service.BlockService;
 import io.nuls.poc.utils.manager.BlockManager;
@@ -148,30 +151,36 @@ public class BlockServiceImpl implements BlockService {
         }
         int chainId = dto.getChainId();
         Chain chain = chainManager.getChainMap().get(chainId);
-        Result result = this.realValidBlock(dto, chain);
-        if (chain.getConfig().getPbft() == 1) {
-            //添加到投票管理器
-
-            result.setErrorCode(ConsensusErrorCode.WAIT_BLOCK_VERIFY);
-        }
-        return result;
-    }
-
-    private Result realValidBlock(ValidBlockDTO dto, Chain chain) {
-        /*
-         * 0区块下载中，1接收到最新区块
-         * */
-        boolean isDownload = (dto.getDownload() == 0);
         String blockHex = dto.getBlock();
 
         if (chain == null) {
             return Result.getFailed(ConsensusErrorCode.CHAIN_NOT_EXIST);
         }
+        Block block = new Block();
         Map<String, Object> validResult = new HashMap<>(2);
         validResult.put("value", false);
         try {
-            Block block = new Block();
             block.parse(new NulsByteBuffer(RPCUtil.decode(blockHex)));
+        } catch (NulsException e) {
+            chain.getLogger().error(e);
+            return Result.getFailed(e.getErrorCode()).setData(validResult);
+        }
+
+        Result result = this.realValidBlock(block, dto, chain, validResult);
+        if (chain.getConfig().getPbft() == 1 && result.isSuccess()) {
+            //添加到投票管理器
+            ErrorCode errorCode = BlockVoterManager.getVoter(chainId).recieveBlock(block);
+            result.setErrorCode(errorCode);
+        }
+        return result;
+    }
+
+    private Result realValidBlock(Block block, ValidBlockDTO dto, Chain chain, Map<String, Object> validResult) {
+        /*
+         * 0区块下载中，1接收到最新区块
+         * */
+        boolean isDownload = (dto.getDownload() == 0);
+        try {
             blockValidator.validate(isDownload, chain, block);
             Response response = CallMethodUtils.verify(dto.getChainId(), block.getTxs(), block.getHeader(), chain.getNewestHeader(), chain.getLogger());
             if (response.isSuccess()) {

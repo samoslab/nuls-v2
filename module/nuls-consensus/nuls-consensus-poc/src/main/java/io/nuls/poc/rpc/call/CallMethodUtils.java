@@ -4,6 +4,7 @@ import io.nuls.base.RPCUtil;
 import io.nuls.base.basic.AddressTool;
 import io.nuls.base.basic.NulsByteBuffer;
 import io.nuls.base.basic.ProtocolVersion;
+import io.nuls.base.data.BaseBusinessMessage;
 import io.nuls.base.data.BlockExtendsData;
 import io.nuls.base.data.BlockHeader;
 import io.nuls.base.data.Transaction;
@@ -25,6 +26,7 @@ import io.nuls.poc.constant.ConsensusConstant;
 import io.nuls.poc.constant.ConsensusErrorCode;
 import io.nuls.poc.model.bo.Chain;
 import io.nuls.poc.model.dto.CmdRegisterDto;
+import io.nuls.poc.utils.LoggerUtil;
 import io.nuls.poc.utils.compare.BlockHeaderComparator;
 
 import java.util.*;
@@ -741,4 +743,34 @@ public class CallMethodUtils {
             return null;
         }
     }
+
+    public static boolean broadcastMsg(int chainId, BaseBusinessMessage message, String command) {
+        return broadcastMsg(chainId, message, null, command);
+    }
+
+    /**
+     * 给网络上节点广播消息
+     *
+     * @param chainId      链Id/chain id
+     * @param message
+     * @param excludeNodes 排除的节点
+     * @return
+     */
+    public static boolean broadcastMsg(int chainId, BaseBusinessMessage message, String excludeNodes, String command) {
+        try {
+            Map<String, Object> params = new HashMap<>(5);
+            params.put(Constants.VERSION_KEY_STR, "1.0");
+            params.put(Constants.CHAIN_ID, chainId);
+            params.put("excludeNodes", excludeNodes);
+            params.put("messageBody", RPCUtil.encode(message.serialize()));
+            params.put("command", command);
+            boolean success = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_broadcast", params).isSuccess();
+            LoggerUtil.commonLog.debug("broadcast " + message.getClass().getName() + ", chainId:" + chainId + ", success:" + success);
+            return success;
+        } catch (Exception e) {
+            LoggerUtil.commonLog.error("", e);
+            return false;
+        }
+    }
+
 }

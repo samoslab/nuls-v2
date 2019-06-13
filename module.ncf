@@ -64,7 +64,7 @@ feeUnit=100000
 dataPath=../../../../../data
 logPath=../../../../../Logs
 dependent=protocol-update,smart-contract
-pbft=0
+pbft=1
 
 [smart_contract]
 #合约视图方法调用最大消耗的Gas
