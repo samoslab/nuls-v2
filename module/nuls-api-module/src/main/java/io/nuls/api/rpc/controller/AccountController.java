@@ -39,6 +39,7 @@ import io.nuls.core.exception.NulsException;
 import io.nuls.core.model.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Niels
@@ -244,7 +245,7 @@ public class AccountController {
             AssetInfo defaultAsset = apiCache.getChainInfo().getDefaultAsset();
             BalanceInfo balanceInfo = WalletRpcHandler.getAccountBalance(chainId, address, defaultAsset.getChainId(), defaultAsset.getAssetId());
             accountInfo.setBalance(balanceInfo.getBalance());
-           // accountInfo.setConsensusLock(balanceInfo.getConsensusLock());
+            // accountInfo.setConsensusLock(balanceInfo.getConsensusLock());
             accountInfo.setTimeLock(balanceInfo.getTimeLock());
         }
         accountInfo.setSymbol(ApiContext.defaultSymbol);
@@ -335,8 +336,8 @@ public class AccountController {
 
     @RpcMethod("getAccountFreezes")
     public RpcResult getAccountFreezes(List<Object> params) {
-        VerifyUtils.verifyParams(params, 4);
-        int chainId, pageNumber, pageSize, assetId;
+        VerifyUtils.verifyParams(params, 6);
+        int chainId, assetChainId, assetId, pageNumber, pageSize;
         String address;
         try {
             chainId = (int) params.get(0);
@@ -344,20 +345,31 @@ public class AccountController {
             return RpcResult.paramError("[chainId] is inValid");
         }
         try {
-            pageNumber = (int) params.get(1);
+            assetChainId = (int) params.get(1);
         } catch (Exception e) {
-            return RpcResult.paramError("[pageNumber] is inValid");
+            return RpcResult.paramError("[assetChainId] is inValid");
         }
         try {
-            pageSize = (int) params.get(2);
+            assetId = (int) params.get(2);
         } catch (Exception e) {
-            return RpcResult.paramError("[sortType] is inValid");
+            return RpcResult.paramError("[assetChainId] is inValid");
         }
         try {
             address = (String) params.get(3);
         } catch (Exception e) {
             return RpcResult.paramError("[address] is inValid");
         }
+        try {
+            pageNumber = (int) params.get(4);
+        } catch (Exception e) {
+            return RpcResult.paramError("[pageNumber] is inValid");
+        }
+        try {
+            pageSize = (int) params.get(5);
+        } catch (Exception e) {
+            return RpcResult.paramError("[sortType] is inValid");
+        }
+
         if (!AddressTool.validAddress(chainId, address)) {
             return RpcResult.paramError("[address] is inValid");
         }
@@ -371,9 +383,7 @@ public class AccountController {
 
         PageInfo<FreezeInfo> pageInfo;
         if (CacheManager.isChainExist(chainId)) {
-            ApiCache apiCache = CacheManager.getCache(chainId);
-            assetId = apiCache.getChainInfo().getDefaultAsset().getAssetId();
-            Result<PageInfo<FreezeInfo>> result = WalletRpcHandler.getFreezeList(chainId, pageNumber, pageSize, address, assetId);
+            Result<PageInfo<FreezeInfo>> result = WalletRpcHandler.getFreezeList(chainId, assetChainId, assetId, address, pageNumber, pageSize);
             if (result.isFailed()) {
                 return RpcResult.failed(result);
             }
@@ -529,5 +539,11 @@ public class AccountController {
         }
         return RpcResult.success(list);
 
+    }
+
+    @RpcMethod("getAllAddressPrefix")
+    public RpcResult getAllAddressPrefix(List<Object> params) {
+        Result<List> result = WalletRpcHandler.getAllAddressPrefix();
+        return RpcResult.success(result.getData());
     }
 }

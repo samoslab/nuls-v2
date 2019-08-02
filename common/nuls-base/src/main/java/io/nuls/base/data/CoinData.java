@@ -30,9 +30,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.nuls.base.basic.AddressTool;
 import io.nuls.base.basic.NulsByteBuffer;
 import io.nuls.base.basic.NulsOutputStreamBuffer;
-import io.nuls.base.script.Script;
-import io.nuls.base.signture.SignatureUtil;
-import io.nuls.core.constant.BaseConstant;
 import io.nuls.core.exception.NulsException;
 import io.nuls.core.model.ByteArrayWrapper;
 import io.nuls.core.parse.SerializeUtils;
@@ -143,10 +140,6 @@ public class CoinData extends BaseNulsData {
         if (null == to) {
             to = new ArrayList<>();
         }
-        if (coinTo.getAddress().length == 23 && coinTo.getAddress()[0] == BaseConstant.P2SH_ADDRESS_TYPE) {
-            Script scriptPubkey = SignatureUtil.createOutputScript(coinTo.getAddress());
-            coinTo.setAddress(scriptPubkey.getProgram());
-        }
         to.add(coinTo);
     }
 
@@ -186,6 +179,16 @@ public class CoinData extends BaseNulsData {
             addressSet.add(it.next().getBytes());
         }
         return addressSet;
+    }
+
+    public Set<String> getFromAddressList(){
+        Set<String> fromAddressList = new HashSet<>();
+        if(from != null && !from.isEmpty()){
+            for (CoinFrom coinFrom:from) {
+                fromAddressList.add(AddressTool.getStringAddressByBytes(coinFrom.getAddress()));
+            }
+        }
+        return fromAddressList;
     }
 
     public int getFromAddressCount(){

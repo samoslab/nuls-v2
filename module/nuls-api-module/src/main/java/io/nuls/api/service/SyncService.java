@@ -299,10 +299,17 @@ public class SyncService {
     }
 
     private void processAliasTx(int chainId, TransactionInfo tx) {
+        AliasInfo aliasInfo = (AliasInfo) tx.getTxData();
+        AccountInfo accountInfo = queryAccountInfo(chainId, aliasInfo.getAddress());
+        accountInfo.setAlias(aliasInfo.getAlias());
+        aliasInfoList.add(aliasInfo);
+        if (tx.getCoinFroms() == null) {
+            return;
+        }
         CoinFromInfo input = tx.getCoinFroms().get(0);
         AccountLedgerInfo ledgerInfo = calcBalance(chainId, input);
         txRelationInfoSet.add(new TxRelationInfo(input, tx, ledgerInfo.getTotalBalance()));
-        AccountInfo accountInfo = queryAccountInfo(chainId, input.getAddress());
+        accountInfo = queryAccountInfo(chainId, input.getAddress());
         accountInfo.setTxCount(accountInfo.getTxCount() + 1);
 
         CoinToInfo output = tx.getCoinTos().get(0);
@@ -311,10 +318,6 @@ public class SyncService {
         accountInfo = queryAccountInfo(chainId, input.getAddress());
         accountInfo.setTxCount(accountInfo.getTxCount() + 1);
 
-        AliasInfo aliasInfo = (AliasInfo) tx.getTxData();
-        accountInfo = queryAccountInfo(chainId, aliasInfo.getAddress());
-        accountInfo.setAlias(aliasInfo.getAlias());
-        aliasInfoList.add(aliasInfo);
     }
 
     private void processCreateAgentTx(int chainId, TransactionInfo tx) {
@@ -322,7 +325,7 @@ public class SyncService {
 
         AccountInfo accountInfo = queryAccountInfo(chainId, input.getAddress());
         accountInfo.setTxCount(accountInfo.getTxCount() + 1);
-        AccountLedgerInfo ledgerInfo = calcBalance(input.getChainId(), input.getChainId(), input.getAssetsId(), accountInfo, tx.getFee().getValue());
+        AccountLedgerInfo ledgerInfo = calcBalance(chainId, input.getChainId(), input.getAssetsId(), accountInfo, tx.getFee().getValue());
         txRelationInfoSet.add(new TxRelationInfo(input, tx, tx.getFee().getValue(), ledgerInfo.getTotalBalance()));
 
         AgentInfo agentInfo = (AgentInfo) tx.getTxData();
@@ -537,7 +540,7 @@ public class SyncService {
         createContractTxInfo(tx, contractInfo);
         contractInfoMap.put(contractInfo.getContractAddress(), contractInfo);
 
-        if (contractInfo.isSuccess() && contractInfo.isNrc20()) {
+        if (contractInfo.isSuccess()) {
             processTokenTransfers(chainId, contractInfo.getResultInfo().getTokenTransfers(), tx);
         }
     }
@@ -551,7 +554,7 @@ public class SyncService {
         contractResultList.add(callInfo.getResultInfo());
         createContractTxInfo(tx, contractInfo);
 
-        if (callInfo.getResultInfo().isSuccess() && contractInfo.isNrc20()) {
+        if (callInfo.getResultInfo().isSuccess()) {
             processTokenTransfers(chainId, callInfo.getResultInfo().getTokenTransfers(), tx);
         }
     }
@@ -587,7 +590,7 @@ public class SyncService {
                 break;
             }
         }
-        AccountLedgerInfo ledgerInfo = calcBalance(input.getChainId(), input.getChainId(), input.getAssetsId(), accountInfo, output.getAmount().add(tx.getFee().getValue()));
+        AccountLedgerInfo ledgerInfo = calcBalance(chainId, input.getChainId(), input.getAssetsId(), accountInfo, output.getAmount().add(tx.getFee().getValue()));
         txRelationInfoSet.add(new TxRelationInfo(input, tx, output.getAmount(), ledgerInfo.getTotalBalance()));
 
         AccountInfo destroyAccount = queryAccountInfo(chainId, output.getAddress());
@@ -628,7 +631,7 @@ public class SyncService {
                 break;
             }
         }
-        AccountLedgerInfo ledgerInfo = calcBalance(input.getChainId(), input.getChainId(), input.getAssetsId(), accountInfo, output.getAmount().add(tx.getFee().getValue()));
+        AccountLedgerInfo ledgerInfo = calcBalance(chainId, input.getChainId(), input.getAssetsId(), accountInfo, output.getAmount().add(tx.getFee().getValue()));
         txRelationInfoSet.add(new TxRelationInfo(input, tx, ledgerInfo.getTotalBalance()));
 
         AccountInfo destroyAccount = queryAccountInfo(chainId, output.getAddress());

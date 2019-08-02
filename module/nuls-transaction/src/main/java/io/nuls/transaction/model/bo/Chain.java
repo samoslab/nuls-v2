@@ -49,7 +49,6 @@ public class Chain {
      * 日志
      */
     private NulsLogger logger;
-//    private Map<String, NulsLogger> loggerMap;//废弃
 
     /**
      * 交易注册信息
@@ -104,15 +103,11 @@ public class Chain {
 
     private final Lock packageLock = new ReentrantLock();
 
-//    /**
-//     * 网络新交易处理
-//     */
-//    private NetTxThreadPoolExecutor netTxThreadPoolExecutor;
-
-//    /**
-//     * 处理一次网络新交易的集合
-//     */
-//    private List<TransactionNetPO> txNetProcessList;
+    /**
+     * 是否可执行打包
+     * 交易在打包时,如果正在执行账本正在执行已确认提交或回滚, 则停止当前打包,并重新打包
+     */
+    private AtomicBoolean packableState;
 
     /**
      * 执行协议升级的处理
@@ -121,6 +116,7 @@ public class Chain {
 
     public Chain() {
         this.packaging = new AtomicBoolean(false);
+        this.packableState = new AtomicBoolean(true);
         this.processTxStatus = new AtomicBoolean(false);
         this.txRegisterMap = new ConcurrentHashMap<>(TxConstant.INIT_CAPACITY_32);
         this.packableHashQueue = new LinkedBlockingDeque<>();
@@ -128,15 +124,9 @@ public class Chain {
         this.contractTxFail = false;
         this.txPackageOrphanMap = new HashMap<>();
         this.orphanList = new LinkedList<>();
-//        this.txNetProcessList = new ArrayList<>(TxConstant.NET_TX_PROCESS_NUMBER_ONCE);
         this.orphanMap = new ConcurrentHashMap<>();
         this.protocolUpgrade = new AtomicBoolean(false);
-//        this.loggerMap = new HashMap<>();
     }
-
-//    public Map<String, NulsLogger> getLoggerMap() {
-//        return loggerMap;
-//    }
 
     public int getChainId(){
         return config.getChainId();
@@ -242,22 +232,6 @@ public class Chain {
         this.orphanList = orphanList;
     }
 
-//    public NetTxThreadPoolExecutor getNetTxThreadPoolExecutor() {
-//        return netTxThreadPoolExecutor;
-//    }
-//
-//    public void setNetTxThreadPoolExecutor(NetTxThreadPoolExecutor netTxThreadPoolExecutor) {
-//        this.netTxThreadPoolExecutor = netTxThreadPoolExecutor;
-//    }
-
-//    public List<TransactionNetPO> getTxNetProcessList() {
-//        return txNetProcessList;
-//    }
-//
-//    public void setTxNetProcessList(List<TransactionNetPO> txNetProcessList) {
-//        this.txNetProcessList = txNetProcessList;
-//    }
-
     public Map<String, Orphans> getOrphanMap() {
         return orphanMap;
     }
@@ -268,5 +242,9 @@ public class Chain {
 
     public AtomicBoolean getProtocolUpgrade() {
         return protocolUpgrade;
+    }
+
+    public AtomicBoolean getPackableState() {
+        return packableState;
     }
 }

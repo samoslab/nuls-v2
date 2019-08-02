@@ -108,7 +108,11 @@ public abstract class RpcModule implements InitializingBean {
      */
     void listenerDependenciesReady(Module module) {
         try {
+
             if (dependentReadyState.containsKey(module)) {
+                if(dependentReadyState.get(module).equals(Boolean.TRUE)){
+                    return ;
+                }
                 dependentReadyState.put(module, Boolean.TRUE);
             }
             Log.info("RMB:ModuleReadyListener :{}", module);
@@ -118,6 +122,9 @@ public abstract class RpcModule implements InitializingBean {
                 if (!ConnectManager.ROLE_CHANNEL_MAP.containsKey(module.getName())) {
                     Log.warn("RMB:dependencie:{}模块触发连接断开事件", module);
                     dependentReadyState.put(module, Boolean.FALSE);
+                    if(followerList.containsKey(module)){
+                        followerList.remove(module);
+                    }
                     if (isRunning()) {
                         state = this.onDependenciesLoss(module);
                         if (state == null) {
@@ -140,11 +147,14 @@ public abstract class RpcModule implements InitializingBean {
      *
      * @param module
      */
-    void followModule(Module module) {
+    void addFollower(Module module) {
         synchronized (this) {
             if (!followerList.containsKey(module)) {
                 Log.info("RMB:registerModuleDependencies :{}", module);
                 followerList.put(module, Boolean.FALSE);
+                if(dependentReadyState.containsKey(module)){
+                    dependentReadyState.put(module, Boolean.FALSE);
+                }
                 try {
                     //监听与follower的连接，如果断开后需要修改通知状态
                     ConnectData connectData = ConnectManager.getConnectDataByRole(module.getName());
@@ -155,6 +165,7 @@ public abstract class RpcModule implements InitializingBean {
                             followerList.remove(module);
                         }
                     });
+                    Log.debug("绑定连接断开事件:{}",module.name);
                 } catch (Exception e) {
                     Log.error("RMB:获取follower:{}模块连接发生异常.", module, e);
                 }
@@ -172,9 +183,9 @@ public abstract class RpcModule implements InitializingBean {
      */
     private void notifyFollowerReady(Module module) {
         notifySender.send("notifyFollowerReady_"+module.toString(),10,() -> {
-            if (followerList.get(module)) {
-                return true;
-            }
+//            if (followerList.get(module)) {
+//                return true;
+//            }
             try {
                 Response cmdResp = ResponseMessageProcessor.requestAndResponse(module.getName(), "listenerDependenciesReady", MapUtils.beanToLinkedMap(this.moduleInfo()),1000L);
                 if (cmdResp.isSuccess()) {
@@ -216,12 +227,12 @@ public abstract class RpcModule implements InitializingBean {
                     .moduleRoles(new String[]{getRole()})
                     .moduleVersion(moduleInfo().getVersion())
                     .scanPackage(scanCmdPackage)
-                    //注册管理模块状态的RPC接口
+                    //注册管理模块状态的RPC接口ifc
                     .addCmdDetail(ModuleStatusCmd.class);
             dependentReadyState.keySet().forEach(d -> server.dependencies(d.getName(), d.getVersion()));
             // Get information from kernel
             ConnectManager.getConnectByUrl(serviceManagerUrl);
-            Log.info("RMB:开始连接service manager");
+            Log.info("RMB:开始连接service manager:{}",serviceManagerUrl);
             ResponseMessageProcessor.syncKernel(serviceManagerUrl, new RegisterInvoke(moduleInfo(), dependentReadyState.keySet()));
             //模块进入ready状态的准备工作，如果条件未达到，等待10秒重新尝试
             while (!doStart()) {

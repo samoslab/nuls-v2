@@ -36,10 +36,11 @@ import io.nuls.ledger.constant.LedgerErrorCode;
 import io.nuls.ledger.model.FreezeLockState;
 import io.nuls.ledger.model.po.AccountState;
 import io.nuls.ledger.model.po.AccountStateUnconfirmed;
-import io.nuls.ledger.model.po.FreezeHeightState;
-import io.nuls.ledger.model.po.FreezeLockTimeState;
+import io.nuls.ledger.model.po.sub.FreezeHeightState;
+import io.nuls.ledger.model.po.sub.FreezeLockTimeState;
 import io.nuls.ledger.service.AccountStateService;
 import io.nuls.ledger.service.UnconfirmedStateService;
+import io.nuls.ledger.utils.LedgerUtil;
 import io.nuls.ledger.utils.LoggerUtil;
 
 import java.math.BigInteger;
@@ -88,7 +89,7 @@ public class AccountStateCmd extends BaseLedgerCmd {
     public Response getBalance(Map params) {
         Integer chainId = (Integer) params.get("chainId");
         Integer assetChainId = (Integer) params.get("assetChainId");
-        String address = (String) params.get("address");
+        String address = LedgerUtil.getRealAddressStr((String) params.get("address"));
         Integer assetId = (Integer) params.get("assetId");
         if (!chainHanlder(chainId)) {
             return failed(LedgerErrorCode.CHAIN_INIT_FAIL);
@@ -127,7 +128,8 @@ public class AccountStateCmd extends BaseLedgerCmd {
     @CmdAnnotation(cmd = CmdConstant.CMD_GET_FREEZE_LIST, version = 1.0,
             description = "分页获取账户锁定资产列表")
     @Parameters(value = {
-            @Parameter(parameterName = "chainId", requestType = @TypeDescriptor(value = int.class), parameterValidRange = "[1-65535]", parameterDes = "资产链Id,取值区间[1-65535]"),
+            @Parameter(parameterName = "chainId", requestType = @TypeDescriptor(value = int.class), parameterValidRange = "[1-65535]", parameterDes = "运行链Id,取值区间[1-65535]"),
+            @Parameter(parameterName = "assetChainId", requestType = @TypeDescriptor(value = int.class), parameterValidRange = "[1-65535]", parameterDes = "资产链Id,取值区间[1-65535]"),
             @Parameter(parameterName = "assetId", requestType = @TypeDescriptor(value = int.class), parameterValidRange = "[1-65535]", parameterDes = "资产Id,取值区间[1-65535]"),
             @Parameter(parameterName = "address", requestType = @TypeDescriptor(value = String.class), parameterDes = "资产所在地址"),
             @Parameter(parameterName = "pageNumber", requestType = @TypeDescriptor(value = int.class), parameterDes = "起始页数"),
@@ -143,8 +145,8 @@ public class AccountStateCmd extends BaseLedgerCmd {
     )
     public Response getFreezeList(Map params) {
         Integer chainId = (Integer) params.get("chainId");
-        Integer assetChainId = chainId;
-        String address = (String) params.get("address");
+        Integer assetChainId = (Integer) params.get("assetChainId");
+        String address = LedgerUtil.getRealAddressStr((String) params.get("address"));
         Integer assetId = (Integer) params.get("assetId");
         Integer pageNumber = (Integer) params.get("pageNumber");
         Integer pageSize = (Integer) params.get("pageSize");
@@ -212,7 +214,7 @@ public class AccountStateCmd extends BaseLedgerCmd {
     public Response getNonce(Map params) {
         Integer chainId = (Integer) params.get("chainId");
         Integer assetChainId = (Integer) params.get("assetChainId");
-        String address = (String) params.get("address");
+        String address = LedgerUtil.getRealAddressStr((String) params.get("address"));
         Integer assetId = (Integer) params.get("assetId");
         if (!chainHanlder(chainId)) {
             return failed(LedgerErrorCode.CHAIN_INIT_FAIL);
@@ -250,7 +252,7 @@ public class AccountStateCmd extends BaseLedgerCmd {
     public Response getBalanceNonce(Map params) {
         Integer chainId = (Integer) params.get("chainId");
         Integer assetChainId = (Integer) params.get("assetChainId");
-        String address = (String) params.get("address");
+        String address = LedgerUtil.getRealAddressStr((String) params.get("address"));
         Integer assetId = (Integer) params.get("assetId");
         if (!chainHanlder(chainId)) {
             return failed(LedgerErrorCode.CHAIN_INIT_FAIL);

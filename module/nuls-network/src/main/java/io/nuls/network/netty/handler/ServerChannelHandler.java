@@ -32,6 +32,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.nuls.base.basic.NulsByteBuffer;
+import io.nuls.network.constant.NetworkConstant;
 import io.nuls.network.manager.ConnectionManager;
 import io.nuls.network.manager.MessageManager;
 import io.nuls.network.manager.handler.base.BaseChannelHandler;
@@ -63,7 +64,10 @@ public class ServerChannelHandler extends BaseChannelHandler {
         boolean success = ConnectionManager.getInstance().nodeConnectIn(socketChannel.remoteAddress().getHostString(), socketChannel.remoteAddress().getPort(), socketChannel);
         if (!success) {
             ctx.close();
+            return;
         }
+        ctx.channel().config().setWriteBufferHighWaterMark(NetworkConstant.HIGH_WATER_MARK);
+        ctx.channel().config().setWriteBufferLowWaterMark(NetworkConstant.LOW_WATER_MARK);
 
     }
 
@@ -72,7 +76,7 @@ public class ServerChannelHandler extends BaseChannelHandler {
         super.channelInactive(ctx);
         SocketChannel channel = (SocketChannel) ctx.channel();
         String nodeId = IpUtil.getNodeId(channel.remoteAddress());
-        LoggerUtil.COMMON_LOG.info("Server Node is Inactive:{}" ,nodeId);
+        LoggerUtil.COMMON_LOG.info("Server Node is Inactive:{}", nodeId);
     }
 
     @Override
@@ -110,7 +114,8 @@ public class ServerChannelHandler extends BaseChannelHandler {
                 ctx.channel().close();
             }
         } catch (Exception e) {
-            throw e;
+            LoggerUtil.COMMON_LOG.error(e);
+//            throw e;
         } finally {
             buf.clear();
         }
