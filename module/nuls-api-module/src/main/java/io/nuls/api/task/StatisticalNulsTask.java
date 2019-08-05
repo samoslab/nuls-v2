@@ -38,9 +38,13 @@ public class StatisticalNulsTask implements Runnable {
         //销毁数量
         BigInteger destroyNuls = accountService.getAccountTotalBalance(chainId, ApiContext.DESTROY_ADDRESS);
         //商务持有数量
-        BigInteger businessNuls = accountService.getAccountTotalBalance(chainId, ApiContext.BUSINESS_ADDRESS);
+        BigInteger businessNuls = accountService.getAccountTotalBalance(chainId, ApiContext.BUSINESS_ADDRESS1)
+                                .add(accountService.getAccountTotalBalance(chainId,ApiContext.BUSINESS_ADDRESS2)
+                                .add(accountService.getAccountTotalBalance(chainId,ApiContext.BUSINESS_ADDRESS3)
+                                .add(accountService.getAccountTotalBalance(chainId,ApiContext.BUSINESS_ADDRESS4))));
         //社区持有数量
-        BigInteger communityNuls = accountService.getAccountTotalBalance(chainId, ApiContext.COMMUNITY_ADDRESS);
+        BigInteger communityNuls = accountService.getAccountTotalBalance(chainId, ApiContext.COMMUNITY_ADDRESS1)
+                                    .add(accountService.getAccountTotalBalance(chainId,ApiContext.COMMUNITY_ADDRESS2));
 
         contextInfo.setTotal(totalCoin);
         contextInfo.setConsensusTotal(consensusTotal);

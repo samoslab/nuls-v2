@@ -80,11 +80,15 @@ public class ApiContext {
     //映射地址
     public static Set<String> MAPPING_ADDRESS = new HashSet<>();
     //商务地址
-    public static String BUSINESS_ADDRESS = "";
+    public static String BUSINESS_ADDRESS1 = "SAMOdGs2w6pNmDeo9Bme5Mfy37vqJ5j6Nxxmq";
+    public static String BUSINESS_ADDRESS2 = "SAMOdGs35Lsq76zSMcpKMzDgoiaYhY5BdZ84b";
+    public static String BUSINESS_ADDRESS3 = "SAMOdGs31GWbXMPnJKyb6CNyjiQxsVvM6yd28";
+    public static String BUSINESS_ADDRESS4 = "SAMOdGs31d1aVc7s4qoAWV4JBgucLzbntjAUJ";
     //团队地址
-    public static String TEAM_ADDRESS = "";
+    public static String TEAM_ADDRESS = "SAMOdGs2xhZmdnBdjCfeakK9hCSC2PserCXiq";
     //社区地址
-    public static String COMMUNITY_ADDRESS = "";
+    public static String COMMUNITY_ADDRESS1 = "SAMOdGs34vvwpZTCisGNZim6ovs36xjsPCTQS";
+    public static String COMMUNITY_ADDRESS2 = "SAMOdGs2z8DcxyStsMtmK5gRWrcLz2YR3LNAk";
     //销毁地址
     public static String DESTROY_ADDRESS = "";
 
