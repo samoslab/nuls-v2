@@ -105,7 +105,8 @@ public class MongoAccountServiceImpl implements AccountService {
         Bson addressFilter = Filters.eq("address", address);
 
         if (type == 0 && isMark) {
-            filter = Filters.and(addressFilter, Filters.ne("type", 1));
+            filter = Filters.and(addressFilter, Filters.ne("type", 1
+            ));
         } else if (type > 0) {
             filter = Filters.and(addressFilter, Filters.eq("type", type));
         } else {
