@@ -87,9 +87,15 @@ public class ApiContext {
     //团队地址
     public static String TEAM_ADDRESS = "SAMOdGs2xhZmdnBdjCfeakK9hCSC2PserCXiq";
     //社区地址
+<<<<<<< HEAD
     public static String COMMUNITY_ADDRESS1 = "SAMOdGs34vvwpZTCisGNZim6ovs36xjsPCTQS";
     public static String COMMUNITY_ADDRESS2 = "SAMOdGs2z8DcxyStsMtmK5gRWrcLz2YR3LNAk";
     //销毁地址
     public static String DESTROY_ADDRESS = "";
+=======
+    public static String COMMUNITY_ADDRESS = "";
+    //销毁地址公钥
+    public static byte[] blackHolePublicKey;
+>>>>>>> upstream/develop
 
 }

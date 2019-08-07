@@ -13,6 +13,7 @@ import io.nuls.core.core.annotation.Component;
 import io.nuls.crosschain.base.constant.CommandConstant;
 import io.nuls.crosschain.base.message.BroadCtxHashMessage;
 import io.nuls.crosschain.base.model.bo.ChainInfo;
+import io.nuls.crosschain.base.model.bo.txdata.VerifierInitData;
 import io.nuls.crosschain.nuls.constant.NulsCrossChainConfig;
 import io.nuls.crosschain.nuls.constant.ParamConstant;
 import io.nuls.crosschain.nuls.model.bo.Chain;
@@ -129,13 +130,14 @@ public class BlockServiceImpl implements BlockService {
         if(!chainManager.isCrossNetUseAble()){
             return Result.getSuccess(SUCCESS);
         }
-        if(config.isMainNet() && chainManager.getRegisteredCrossChainList().size() <= 1){
-            return Result.getSuccess(SUCCESS);
-        }
-        BlockHeader blockHeader = new BlockHeader();
         try {
+            BlockHeader blockHeader = new BlockHeader();
             String headerHex = (String) params.get(ParamConstant.PARAM_BLOCK_HEADER);
             blockHeader.parse(RPCUtil.decode(headerHex), 0);
+            chainManager.getChainHeaderMap().put(chainId, blockHeader);
+            if(config.isMainNet() && chainManager.getRegisteredCrossChainList().size() <= 1){
+                return Result.getSuccess(SUCCESS);
+            }
             /*
             检测是否有轮次变化，如果有轮次变化，查询共识模块共识节点是否有变化，如果有变化则创建验证人变更交易
             */
@@ -152,16 +154,15 @@ public class BlockServiceImpl implements BlockService {
                 agentChangeMap = ConsensusCall.getAgentChangeInfo(chain, null, blockHeader.getExtend());
             }
             if(agentChangeMap != null){
-                List<String> registerAgentList = agentChangeMap.get("registerAgentList");
-                List<String> cancelAgentList = agentChangeMap.get("cancelAgentList");
+                List<String> registerAgentList = agentChangeMap.get(ParamConstant.PARAM_REGISTER_AGENT_LIST);
+                List<String> cancelAgentList = agentChangeMap.get(ParamConstant.PARAM_CANCEL_AGENT_LIST);
                 boolean verifierChange = (registerAgentList != null && !registerAgentList.isEmpty()) || (cancelAgentList != null && !cancelAgentList.isEmpty());
                 if(verifierChange){
                     chain.getLogger().info("有验证人变化，创建验证人变化交易!");
                     Transaction verifierChangeTx = TxUtil.createVerifierChangeTx(registerAgentList, cancelAgentList, blockHeader.getTime(),chainId);
-                    TxUtil.handleNewCtx(verifierChangeTx, chain);
+                    TxUtil.handleNewCtx(verifierChangeTx, chain, registerAgentList);
                 }
             }
-            chainManager.getChainHeaderMap().put(chainId, blockHeader);
         }catch (Exception e){
             chain.getLogger().error(e);
             return Result.getFailed(DATA_PARSE_ERROR);
@@ -186,7 +187,7 @@ public class BlockServiceImpl implements BlockService {
                     return false;
                 }
                 return NetWorkCall.broadcast(toId, message, CommandConstant.BROAD_CTX_HASH_MESSAGE,true);
-            }else{
+            }else if(ctx.getType() == TxType.VERIFIER_CHANGE){
                 if(!chain.isMainChain()){
                     if (!MessageUtil.canSendMessage(chain,chainId)) {
                         return false;
@@ -237,7 +238,12 @@ public class BlockServiceImpl implements BlockService {
                     }
                     return broadResult;
                 }
+            }else if(ctx.getType() == TxType.VERIFIER_INIT){
+                VerifierInitData verifierInitData = new VerifierInitData();
+                verifierInitData.parse(ctx.getTxData(),0);
+                return NetWorkCall.broadcast(verifierInitData.getRegisterChainId(), message, CommandConstant.BROAD_CTX_HASH_MESSAGE,true);
             }
+            return true;
         }catch (Exception e){
             chain.getLogger().error(e);
             return false;
