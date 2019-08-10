@@ -148,7 +148,7 @@ public class ApiModuleBootstrap extends RpcModule {
         if(apiConfig.getMappingAddress() != null) {
             ApiContext.MAPPING_ADDRESS = new HashSet(Arrays.asList(apiConfig.getMappingAddress().split(",")));
         }
-        ApiContext.BUSINESS_ADDRESS = apiConfig.getBusinessAddress();
+        ApiContext.BUSINESS_ADDRESS1 = apiConfig.getBusinessAddress();
         ApiContext.TEAM_ADDRESS = apiConfig.getTeamAddress();
         ApiContext.COMMUNITY_ADDRESS = apiConfig.getCommunityAddress();
 
