@@ -59,7 +59,7 @@ singleDownloadTimeout=10000
 batchDownloadTimeout=30000
 #区块同步过程中缓存的区块字节数上限
 cachedBlockSizeLimit=26214400
-genesisBlockPath=
+genesisBlockPath=./samos.json
 
 [consensus]
 #seedNodes=tNULSeBaMkrt4z9FYEkkR9D6choPVvQr94oYZp,tNULSeBaMoGr2RkLZPfJeS5dFzZeNj1oXmaYNe,tNULSeBaMnG8hGcyeygVeyaL5cXV38bQm1rw9M,tNULSeBaMtFXBLB35WSAnoN9ezGLLCbh7sPNNN
