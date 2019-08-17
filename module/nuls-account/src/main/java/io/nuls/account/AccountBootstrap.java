@@ -37,7 +37,6 @@ public class AccountBootstrap extends RpcModule {
 
     @Autowired
     private AccountConfig accountConfig;
-
     @Autowired
     private ChainManager chainManager;
     @Autowired
